@@ -20,16 +20,23 @@ jobs:
           HF_USERNAME: ashishsankhua
           HF_SPACE_NAME: capital_eye_market_agent
         run: |
-          # Check if HF_TOKEN is set
-          if [ -z "$HF_TOKEN" ]; then
-            echo "❌ ERROR: HF_TOKEN secret is not set!"
+          # Debug: Check if token is set (masked)
+          if [ -n "$HF_TOKEN" ]; then
+            echo "✅ HF_TOKEN is set (value hidden for security)"
+            echo "Token length: ${#HF_TOKEN}"
+          else
+            echo "❌ HF_TOKEN is NOT set or empty"
             echo ""
-            echo "To fix this:"
+            echo "DEBUG INFO:"
+            echo "- Make sure you added HF_TOKEN to GitHub Secrets (not Variables)"
+            echo "- URL: https://github.com/asankhua/capital-eye-market-agent/settings/secrets/actions"
+            echo ""
+            echo "To fix:"
             echo "1. Go to https://huggingface.co/settings/tokens"
-            echo "2. Create a new token with 'Write' access"
-            echo "3. Go to https://github.com/asankhua/capital-eye-market-agent/settings/secrets/actions"
-            echo "4. Add a new secret named 'HF_TOKEN' with your token value"
-            echo "5. Re-run this workflow"
+            echo "2. Create token with WRITE access"
+            echo "3. Go to GitHub repo → Settings → Secrets and variables → Actions"
+            echo "4. Click 'New repository secret' (NOT 'New repository variable')"
+            echo "5. Name: HF_TOKEN, Value: your huggingface token"
             exit 1
           fi
           
@@ -40,10 +47,17 @@ jobs:
           git config --global user.email "github-actions@github.com"
           git config --global user.name "GitHub Actions"
           
-          # Setup HF repository
-          git remote add hf https://$HF_TOKEN@huggingface.co/spaces/$HF_USERNAME/$HF_SPACE_NAME 2>/dev/null || true
+          # Setup HF repository - use a different approach
+          echo "Setting up Hugging Face remote..."
+          git remote remove hf 2>/dev/null || true
+          git remote add hf "https://user:$HF_TOKEN@huggingface.co/spaces/$HF_USERNAME/$HF_SPACE_NAME"
+          
+          # Test connection first
+          echo "Testing connection to Hugging Face..."
+          git ls-remote hf --heads main 2>&1 || true
           
           # Push to Hugging Face
+          echo "Pushing to Hugging Face Spaces..."
           git push hf main --force
 
       - name: Notify on success
