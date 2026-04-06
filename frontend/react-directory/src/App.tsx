@@ -15,7 +15,7 @@ const STORAGE_KEY = 'capitaleye_settings';
 function App() {
   const [activeView, setActiveView] = useState('dashboard');
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
-  const [isDarkMode, setIsDarkMode] = useState(false);
+  const [_, setIsDarkMode] = useState(false);
 
   // Load theme from localStorage
   useEffect(() => {

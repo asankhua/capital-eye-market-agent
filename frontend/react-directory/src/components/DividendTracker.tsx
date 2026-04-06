@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Coins, Calendar, Percent, Search, Clock } from 'lucide-react';
+import { Coins, Calendar, Search, Clock } from 'lucide-react';
 import { api } from '../api';
 
 interface DividendAnnouncement {
