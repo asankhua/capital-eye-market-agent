@@ -12,7 +12,7 @@ import os
 
 from dotenv import load_dotenv
 
-load_dotenv()
+load_dotenv(override=False)  # Don't override env vars from HF Secrets
 
 LOG_FILE = os.getenv("LOG_FILE", "dump.log")
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
