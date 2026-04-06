@@ -78,6 +78,148 @@ async def _fetch_with_retry(ticker: str, period: str = "1y") -> dict[str, Any]:
     return {}
 
 
+def _get_mock_stock_data(ticker: str) -> dict[str, Any] | None:
+    """Return comprehensive mock data for major Indian stocks when Yahoo API fails."""
+    from datetime import datetime, timedelta
+    import random
+    
+    # Normalize ticker
+    clean_ticker = ticker.upper().replace('.NS', '').replace('.BO', '')
+    
+    # Mock data for major Indian stocks
+    mock_db: dict[str, dict[str, Any]] = {
+        'TCS': {
+            'company_name': 'Tata Consultancy Services Ltd',
+            'pe_ratio': 28.5, 'market_cap': 15_000_000_000_000, 'profit_margin': 0.18,
+            'current_price': 4250.0, 'fifty_two_week_high': 4590.0, 'fifty_two_week_low': 3450.0,
+        },
+        'RELIANCE': {
+            'company_name': 'Reliance Industries Ltd',
+            'pe_ratio': 22.8, 'market_cap': 18_500_000_000_000, 'profit_margin': 0.12,
+            'current_price': 2730.0, 'fifty_two_week_high': 3100.0, 'fifty_two_week_low': 2200.0,
+        },
+        'HDFCBANK': {
+            'company_name': 'HDFC Bank Ltd',
+            'pe_ratio': 18.2, 'market_cap': 12_000_000_000_000, 'profit_margin': 0.28,
+            'current_price': 1580.0, 'fifty_two_week_high': 1790.0, 'fifty_two_week_low': 1360.0,
+        },
+        'HDFC': {
+            'company_name': 'HDFC Ltd',
+            'pe_ratio': 16.5, 'market_cap': 5_200_000_000_000, 'profit_margin': 0.32,
+            'current_price': 2850.0, 'fifty_two_week_high': 3100.0, 'fifty_two_week_low': 2400.0,
+        },
+        'INFY': {
+            'company_name': 'Infosys Ltd',
+            'pe_ratio': 26.8, 'market_cap': 7_800_000_000_000, 'profit_margin': 0.19,
+            'current_price': 1880.0, 'fifty_two_week_high': 2050.0, 'fifty_two_week_low': 1480.0,
+        },
+        'ITC': {
+            'company_name': 'ITC Ltd',
+            'pe_ratio': 24.5, 'market_cap': 5_500_000_000_000, 'profit_margin': 0.25,
+            'current_price': 445.0, 'fifty_two_week_high': 510.0, 'fifty_two_week_low': 380.0,
+        },
+        'HINDUNILVR': {
+            'company_name': 'Hindustan Unilever Ltd',
+            'pe_ratio': 58.2, 'market_cap': 5_800_000_000_000, 'profit_margin': 0.16,
+            'current_price': 2460.0, 'fifty_two_week_high': 2750.0, 'fifty_two_week_low': 2100.0,
+        },
+        'SBIN': {
+            'company_name': 'State Bank of India',
+            'pe_ratio': 12.5, 'market_cap': 8_200_000_000_000, 'profit_margin': 0.22,
+            'current_price': 920.0, 'fifty_two_week_high': 1050.0, 'fifty_two_week_low': 720.0,
+        },
+        'ICICIBANK': {
+            'company_name': 'ICICI Bank Ltd',
+            'pe_ratio': 17.8, 'market_cap': 7_500_000_000_000, 'profit_margin': 0.26,
+            'current_price': 1080.0, 'fifty_two_week_high': 1230.0, 'fifty_two_week_low': 890.0,
+        },
+        'RECLTD': {
+            'company_name': 'REC Ltd',
+            'pe_ratio': 6.5, 'market_cap': 450_000_000_000, 'profit_margin': 0.28,
+            'current_price': 485.0, 'fifty_two_week_high': 620.0, 'fifty_two_week_low': 350.0,
+        },
+        'PFC': {
+            'company_name': 'Power Finance Corporation Ltd',
+            'pe_ratio': 5.8, 'market_cap': 380_000_000_000, 'profit_margin': 0.30,
+            'current_price': 460.0, 'fifty_two_week_high': 590.0, 'fifty_two_week_low': 320.0,
+        },
+    }
+    
+    mock_info = mock_db.get(clean_ticker)
+    if not mock_info:
+        return None
+    
+    # Generate synthetic price history (365 days)
+    base_price = mock_info['current_price']
+    price_records = []
+    now = datetime.now()
+    
+    random.seed(clean_ticker)  # Consistent data for same ticker
+    for i in range(365):
+        date = now - timedelta(days=365-i)
+        # Random walk with slight upward bias
+        change = random.uniform(-0.025, 0.028)
+        price = base_price * (1 + change * (i / 365))
+        
+        daily_volatility = random.uniform(0.005, 0.02)
+        open_price = price * (1 + random.uniform(-0.005, 0.005))
+        close_price = price
+        high_price = max(open_price, close_price) * (1 + daily_volatility)
+        low_price = min(open_price, close_price) * (1 - daily_volatility)
+        
+        price_records.append({
+            "date": date.strftime("%Y-%m-%d"),
+            "open": round(open_price, 2),
+            "high": round(high_price, 2),
+            "low": round(low_price, 2),
+            "close": round(close_price, 2),
+            "volume": int(random.uniform(1_000_000, 10_000_000)),
+        })
+    
+    # Generate mock financial periods
+    periods = []
+    for i in range(4):  # 4 quarters
+        period_date = now - timedelta(days=i*90)
+        periods.append({
+            "period": period_date.strftime("%Y-%m-%d"),
+            "Total Revenue": random.uniform(50_000_000_000, 100_000_000_000),
+            "Net Income": random.uniform(10_000_000_000, 20_000_000_000),
+            "Total Assets": random.uniform(500_000_000_000, 1_000_000_000_000),
+            "Total Liabilities": random.uniform(200_000_000_000, 400_000_000_000),
+        })
+    
+    return {
+        "ticker": ticker,
+        "company_name": mock_info['company_name'],
+        "price_history": {
+            "period": "1y",
+            "data": price_records,
+            "count": len(price_records),
+        },
+        "ratios": {
+            "pe_ratio": mock_info['pe_ratio'],
+            "forward_pe": mock_info['pe_ratio'] * 0.9,
+            "market_cap": mock_info['market_cap'],
+            "profit_margin": mock_info['profit_margin'],
+            "debt_to_equity": random.uniform(0.1, 0.5),
+            "revenue": random.uniform(200_000_000_000, 500_000_000_000),
+            "earnings_growth": random.uniform(-0.05, 0.15),
+            "revenue_growth": random.uniform(0.02, 0.12),
+            "current_price": mock_info['current_price'],
+            "fifty_two_week_high": mock_info['fifty_two_week_high'],
+            "fifty_two_week_low": mock_info['fifty_two_week_low'],
+        },
+        "financials": {
+            "income_statement": periods,
+            "balance_sheet": periods,
+            "cash_flow": periods,
+        },
+        "news": get_sample_news(ticker) or [],
+        "raw_info": {**mock_info, "source_note": "Mock data - Yahoo API rate limited"},
+        "source_note": "Mock data - Yahoo API rate limited on HF",
+    }
+
+
 class YahooFinanceTool:
     """Wrapper around yfinance for structured stock data retrieval.
     
@@ -218,7 +360,13 @@ class YahooFinanceTool:
             
         except Exception as e:
             logger.error("Error fetching all data for %s: %s", ticker, e)
-            # Return sample news even when API fails
+            # Return comprehensive mock data when API fails (HF deployment)
+            mock_data = _get_mock_stock_data(ticker)
+            if mock_data:
+                logger.info("Returning mock data for %s due to API failure", ticker)
+                return mock_data
+            
+            # Fallback to minimal response with sample news
             sample_news = get_sample_news(ticker)
             return {
                 "ticker": ticker,
