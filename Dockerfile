@@ -63,11 +63,8 @@ COPY backend/ ./backend/
 COPY --from=frontend-builder /app/frontend/react-directory/dist ./frontend/dist
 
 # Copy other necessary files
-COPY .env.example ./.env.example
 COPY LICENSE .
-COPY SKILL.md .
 COPY README.md .
-COPY docs/ ./docs/
 
 # Create necessary directories
 RUN mkdir -p logs db
