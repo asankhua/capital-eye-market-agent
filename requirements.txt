@@ -16,7 +16,7 @@ groq>=0.9.0
 # Data & analysis
 yfinance>=0.2.36
 pandas>=2.2.0
-pandas-ta>=0.3.14
+numpy>=1.26.0
 
 # Search
 duckduckgo-search>=5.0.0
