@@ -13,7 +13,9 @@ from datetime import datetime, timedelta
 
 from fastapi import FastAPI, HTTPException, Response
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse, RedirectResponse
+from fastapi.responses import JSONResponse, RedirectResponse, FileResponse
+from fastapi.staticfiles import StaticFiles
+import os
 
 from backend.config import logger as root_logger
 from backend.models.schemas import (
@@ -91,6 +93,16 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# ── Static Files (React Frontend) ───────────────────────────────
+
+# Check if frontend dist exists (production/Docker)
+FRONTEND_DIST = "/app/frontend/dist"
+if os.path.exists(FRONTEND_DIST):
+    logger.info("Serving React frontend from %s", FRONTEND_DIST)
+    app.mount("/assets", StaticFiles(directory=os.path.join(FRONTEND_DIST, "assets")), name="assets")
+else:
+    logger.info("Frontend dist not found at %s - API only mode", FRONTEND_DIST)
 
 
 # ── Error Handling ────────────────────────────────────────────────
@@ -199,7 +211,10 @@ async def _build_response(result: dict, analysis_type: AnalysisType) -> Analysis
 
 @app.get("/")
 async def root():
-    """Redirect to API documentation."""
+    """Serve React frontend if available, otherwise redirect to API docs."""
+    index_path = os.path.join(FRONTEND_DIST, "index.html")
+    if os.path.exists(index_path):
+        return FileResponse(index_path)
     return RedirectResponse(url="/docs")
 
 
