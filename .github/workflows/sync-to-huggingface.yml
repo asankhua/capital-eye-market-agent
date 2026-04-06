@@ -20,6 +20,19 @@ jobs:
           HF_USERNAME: ashishsankhua
           HF_SPACE_NAME: capital_eye_market_agent
         run: |
+          # Check if HF_TOKEN is set
+          if [ -z "$HF_TOKEN" ]; then
+            echo "❌ ERROR: HF_TOKEN secret is not set!"
+            echo ""
+            echo "To fix this:"
+            echo "1. Go to https://huggingface.co/settings/tokens"
+            echo "2. Create a new token with 'Write' access"
+            echo "3. Go to https://github.com/asankhua/capital-eye-market-agent/settings/secrets/actions"
+            echo "4. Add a new secret named 'HF_TOKEN' with your token value"
+            echo "5. Re-run this workflow"
+            exit 1
+          fi
+          
           # Install git-lfs
           sudo apt-get update && sudo apt-get install -y git-lfs
           
