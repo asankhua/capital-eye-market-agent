@@ -1,0 +1,12 @@
+2026-04-06 05:21:53 | INFO     | market_analyst | Logger initialised – level=INFO, file=dump.log
+2026-04-06 05:21:53 | INFO     | market_analyst.models.schemas | Pydantic schemas loaded
+2026-04-06 05:21:55 | WARNING  | market_analyst.tools.sqlite_cache | MCP not available (requires Python 3.10+), using direct SQLite fallback
+2026-04-06 05:21:55 | INFO     | market_analyst.api.server | FastAPI server starting up
+2026-04-06 05:21:55 | INFO     | market_analyst.tools.sqlite_mcp | SQLite schema initialized with new tables (direct connection)
+2026-04-06 05:21:55 | INFO     | market_analyst.tools.sqlite_mcp | Direct SQLite cache initialized at /Users/asankhua/Trail/market_analyst-main/market_analysis.db
+2026-04-06 05:22:52 | INFO     | market_analyst | Logger initialised – level=INFO, file=dump.log
+2026-04-06 05:22:52 | INFO     | market_analyst.models.schemas | Pydantic schemas loaded
+2026-04-06 05:22:54 | WARNING  | market_analyst.tools.sqlite_cache | MCP not available (requires Python 3.10+), using direct SQLite fallback
+2026-04-06 05:22:54 | INFO     | market_analyst.api.server | FastAPI server starting up
+2026-04-06 05:22:54 | INFO     | market_analyst.tools.sqlite_mcp | SQLite schema initialized with new tables (direct connection)
+2026-04-06 05:22:54 | INFO     | market_analyst.tools.sqlite_mcp | Direct SQLite cache initialized at /Users/asankhua/Trail/market_analyst-main/market_analysis.db

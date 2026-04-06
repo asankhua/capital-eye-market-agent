@@ -1,0 +1,39 @@
+INFO:     Will watch for changes in these directories: ['/Users/asankhua/Cursor/market_analyst-main']
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+INFO:     Started reloader process [68987] using WatchFiles
+2026-03-24 07:28:57 | INFO     | market_analyst | Logger initialised – level=INFO, file=dump.log
+2026-03-24 07:28:57 | INFO     | market_analyst.models.schemas | Pydantic schemas loaded
+/Users/asankhua/Library/Python/3.9/lib/python/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020
+  warnings.warn(
+/Users/asankhua/Library/Python/3.9/lib/python/site-packages/google/api_core/_python_version_support.py:246: FutureWarning: You are using a non-supported Python version (3.9.6). Google will not post any further updates to google.api_core supporting this Python version. Please upgrade to the latest Python version, or at least Python 3.10, and then update google.api_core.
+  warnings.warn(message, FutureWarning)
+/Users/asankhua/Library/Python/3.9/lib/python/site-packages/google/auth/__init__.py:54: FutureWarning: You are using a Python version 3.9 past its end of life. Google will update google-auth with critical bug fixes on a best-effort basis, but not with any other fixes or features. Please upgrade your Python version, and then update google-auth.
+  warnings.warn(eol_message.format("3.9"), FutureWarning)
+/Users/asankhua/Library/Python/3.9/lib/python/site-packages/google/oauth2/__init__.py:40: FutureWarning: You are using a Python version 3.9 past its end of life. Google will update google-auth with critical bug fixes on a best-effort basis, but not with any other fixes or features. Please upgrade your Python version, and then update google-auth.
+  warnings.warn(eol_message.format("3.9"), FutureWarning)
+/Users/asankhua/Cursor/market_analyst-main/backend/llm_provider.py:14: FutureWarning: 
+
+All support for the `google.generativeai` package has ended. It will no longer be receiving 
+updates or bug fixes. Please switch to the `google.genai` package as soon as possible.
+See README for more details:
+
+https://github.com/google-gemini/deprecated-generative-ai-python/blob/main/README.md
+
+  import google.generativeai as genai
+2026-03-24 07:28:59 | WARNING  | market_analyst.tools.sqlite_cache | MCP not available (requires Python 3.10+), using direct SQLite fallback
+INFO:     Started server process [69036]
+INFO:     Waiting for application startup.
+2026-03-24 07:28:59 | INFO     | market_analyst.api.server | FastAPI server starting up
+ERROR:    Traceback (most recent call last):
+  File "/Users/asankhua/Library/Python/3.9/lib/python/site-packages/starlette/routing.py", line 694, in lifespan
+    async with self.lifespan_context(app) as maybe_state:
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/contextlib.py", line 175, in __aenter__
+    return await self.gen.__anext__()
+  File "/Users/asankhua/Cursor/market_analyst-main/backend/api/fastapi_server.py", line 51, in lifespan
+    await SQLiteMCPTool.initialize()
+  File "/Users/asankhua/Cursor/market_analyst-main/backend/tools/sqlite_mcp_tool.py", line 67, in initialize
+    await cls._init_sqlite()
+AttributeError: type object 'SQLiteCacheTool' has no attribute '_init_sqlite'
+
+ERROR:    Application startup failed. Exiting.
+INFO:     Stopping reloader process [68987]
