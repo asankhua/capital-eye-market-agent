@@ -1,3 +1,13 @@
+---
+title: Capital Eye Market Agent
+emoji: 📈
+colorFrom: blue
+colorTo: green
+sdk: docker
+app_file: backend/api/fastapi_server.py
+pinned: false
+---
+
 # AI Market Analyst
 
 ![FastAPI](https://img.shields.io/badge/FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white)
