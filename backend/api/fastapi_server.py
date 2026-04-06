@@ -296,7 +296,7 @@ async def chat(request: ChatRequest):
         except ValueError:
             analysis_type = AnalysisType.SINGLE
 
-        return _build_response(result, analysis_type)
+        return await _build_response(result, analysis_type)
     except Exception as e:
         logger.error("Error processing chat: %s", e)
         raise HTTPException(status_code=500, detail=str(e))
@@ -564,7 +564,7 @@ async def export_report(request: ExportRequest):
     try:
         # Run analysis
         result = await run_single_stock_analysis(request.ticker)
-        response = _build_response(result, AnalysisType.SINGLE)
+        response = await _build_response(result, AnalysisType.SINGLE)
         
         if request.format == "json":
             return JSONResponse(
