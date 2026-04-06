@@ -1,12 +1,14 @@
-"""Finnhub API integration for market data - Using DUMMY DATA for testing."""
+"""Finnhub API integration for market data."""
 import os
+import requests
 from typing import List, Dict, Any, Optional
 from datetime import datetime, timedelta
-from dotenv import load_dotenv
 
-load_dotenv()
+# Get API key from environment
+FINNHUB_API_KEY = os.getenv("FINNHUB_API_KEY", "")
+FINNHUB_BASE_URL = "https://finnhub.io/api/v1"
 
-# DUMMY DATA FOR UI TESTING
+# Fallback dummy data (used when API fails or no key)
 DUMMY_EARNINGS = [
     {"symbol": "AAPL", "date": (datetime.now() + timedelta(days=5)).strftime("%Y-%m-%d"), "epsEstimate": 1.89, "revenueEstimate": 119200000000, "fiscalPeriod": "Q1 2026"},
     {"symbol": "MSFT", "date": (datetime.now() + timedelta(days=8)).strftime("%Y-%m-%d"), "epsEstimate": 3.12, "revenueEstimate": 67800000000, "fiscalPeriod": "Q3 2026"},
@@ -124,18 +126,17 @@ DUMMY_NEWS = [
     },
 ]
 
-DUMMY_SECTOR_PERFORMANCE = [
-    {"sector": "Technology", "change_percent": 2.85},
-    {"sector": "Communication Services", "change_percent": 2.14},
-    {"sector": "Consumer Discretionary", "change_percent": 1.67},
-    {"sector": "Financials", "change_percent": 0.94},
-    {"sector": "Industrials", "change_percent": 0.58},
-    {"sector": "Real Estate", "change_percent": 0.32},
-    {"sector": "Materials", "change_percent": -0.15},
-    {"sector": "Health Care", "change_percent": -0.42},
-    {"sector": "Consumer Staples", "change_percent": -0.68},
-    {"sector": "Energy", "change_percent": -0.95},
-    {"sector": "Utilities", "change_percent": -1.23},
+DUMMY_SECTORS = [
+    {"name": "Technology", "change_percent": 2.85},
+    {"name": "Communication Services", "change_percent": 2.14},
+    {"name": "Consumer Discretionary", "change_percent": 1.67},
+    {"name": "Financials", "change_percent": 1.24},
+    {"name": "Healthcare", "change_percent": 0.85},
+    {"name": "Industrials", "change_percent": 0.42},
+    {"name": "Energy", "change_percent": -0.34},
+    {"name": "Real Estate", "change_percent": -0.68},
+    {"name": "Utilities", "change_percent": -0.95},
+    {"name": "Materials", "change_percent": -1.18},
 ]
 
 DUMMY_COMPANY_NEWS = {
@@ -193,48 +194,199 @@ class FinnhubTool:
     def get_market_news(self, category: str = "general", symbol: Optional[str] = None) -> List[Dict]:
         """Get market news - Returns DUMMY DATA."""
         print(f"[Finnhub] Returning dummy news for category={category}")
-        if symbol:
-            return DUMMY_COMPANY_NEWS.get(symbol.upper(), [])
-        return [n for n in DUMMY_NEWS if category == "general" or n["category"] == category]
+        return DUMMY_NEWS
     
-    def get_company_news(self, symbol: str, from_date: str = None, to_date: str = None) -> List[Dict]:
-        """Get company-specific news - Returns DUMMY DATA."""
-        print(f"[Finnhub] Returning dummy news for {symbol}")
-        return DUMMY_COMPANY_NEWS.get(symbol.upper(), [])
-    
-    def get_market_movers(self, type: str = "gainers") -> List[Dict]:
-        """Get market movers - Returns DUMMY DATA."""
-        print(f"[Finnhub] Returning dummy {type} data")
-        return DUMMY_MARKET_MOVERS.get(type, DUMMY_MARKET_MOVERS["gainers"])
+    def get_market_movers(self, mover_type: str = "gainers") -> List[Dict]:
+        """Get market movers (gainers/losers/most active)."""
+        if not self.api_key:
+            print("[Finnhub] Using dummy market movers")
+            return DUMMY_MARKET_MOVERS.get(mover_type, DUMMY_MARKET_MOVERS["gainers"])
+        
+        # Map our types to Finnhub types
+        type_mapping = {
+            "gainers": "percent_change_gainers",
+            "losers": "percent_change_losers", 
+            "active": "most_actives"
+        }
+        
+        data = self._make_request("stock/market movers", {
+            "exchange": "US",
+            "type": type_mapping.get(mover_type, "percent_change_gainers")
+        })
+        
+        if not data or "data" not in data:
+            print("[Finnhub] API returned no data, using dummy")
+            return DUMMY_MARKET_MOVERS.get(mover_type, DUMMY_MARKET_MOVERS["gainers"])
+        
+        # Transform Finnhub format to our format
+        movers = []
+        for item in data.get("data", []):
+            movers.append({
+                "symbol": item.get("symbol", ""),
+                "name": item.get("name", item.get("symbol", "")),
+                "price": item.get("price", 0),
+                "change": item.get("change", 0),
+                "change_percent": item.get("percent_change", 0),
+                "volume": item.get("volume", 0)
+            })
+        
+        return movers if movers else DUMMY_MARKET_MOVERS.get(mover_type, DUMMY_MARKET_MOVERS["gainers"])
     
     def get_sector_performance(self) -> List[Dict]:
-        """Get sector performance - Returns DUMMY DATA."""
-        print("[Finnhub] Returning dummy sector performance data")
-        return DUMMY_SECTOR_PERFORMANCE
+        """Get sector performance data."""
+        if not self.api_key:
+            print("[Finnhub] Using dummy sector data")
+            return DUMMY_SECTORS
+        
+        data = self._make_request("stock/sector")
+        
+        if not data:
+            print("[Finnhub] API returned no sector data, using dummy")
+            return DUMMY_SECTORS
+        
+        # Transform to our format
+        sectors = []
+        for sector_name, performance in data.items():
+            if isinstance(performance, dict):
+                change_pct = performance.get("change_percentage", 0)
+                sectors.append({
+                    "name": sector_name.replace("_", " ").title(),
+                    "change_percent": round(change_pct, 2)
+                })
+        
+        return sectors if sectors else DUMMY_SECTORS
+    
+    def get_company_news(self, symbol: str) -> List[Dict]:
+        """Get news for specific company."""
+        if not self.api_key:
+            return []
+        
+        end_date = datetime.now()
+        start_date = end_date - timedelta(days=7)
+        
+        data = self._make_request("company-news", {
+            "symbol": symbol,
+            "from": start_date.strftime("%Y-%m-%d"),
+            "to": end_date.strftime("%Y-%m-%d")
+        })
+        
+        if not data or not isinstance(data, list):
+            return []
+        
+        news = []
+        for item in data[:5]:
+            news.append({
+                "datetime": item.get("datetime", 0),
+                "headline": item.get("headline", ""),
+                "source": item.get("source", ""),
+                "summary": item.get("summary", ""),
+                "url": item.get("url", "")
+            })
+        
+        return news
+    
+    def get_earnings_calendar(self, symbol: str = None, from_date: str = None, to_date: str = None) -> List[Dict]:
+        """Get earnings calendar."""
+        if not self.api_key:
+            return DUMMY_EARNINGS
+        
+        if not from_date:
+            from_date = datetime.now().strftime("%Y-%m-%d")
+        if not to_date:
+            to_date = (datetime.now() + timedelta(days=30)).strftime("%Y-%m-%d")
+        
+        params = {"from": from_date, "to": to_date}
+        if symbol:
+            params["symbol"] = symbol
+        
+        data = self._make_request("calendar/earnings", params)
+        
+        if not data or "earningsCalendar" not in data:
+            return DUMMY_EARNINGS
+        
+        earnings = []
+        for item in data.get("earningsCalendar", []):
+            earnings.append({
+                "symbol": item.get("symbol", ""),
+                "date": item.get("date", ""),
+                "epsEstimate": item.get("epsEstimate"),
+                "revenueEstimate": item.get("revenueEstimate"),
+                "fiscalPeriod": item.get("period", "")
+            })
+        
+        return earnings if earnings else DUMMY_EARNINGS
     
     def get_stock_quote(self, symbol: str) -> Optional[Dict]:
-        """Get stock quote - Returns DUMMY DATA."""
-        print(f"[Finnhub] Returning dummy quote for {symbol}")
-        return {
-            "c": 150.25,
-            "d": 2.15,
-            "dp": 1.45,
-            "h": 152.30,
-            "l": 148.90,
-            "o": 149.50,
-            "pc": 148.10,
-            "t": int(datetime.now().timestamp())
-        }
+        """Get stock quote."""
+        if not self.api_key:
+            print(f"[Finnhub] Using dummy quote for {symbol}")
+            return {
+                "c": 150.25,
+                "d": 2.15,
+                "dp": 1.45,
+                "h": 152.30,
+                "l": 148.90,
+                "o": 149.50,
+                "pc": 148.10,
+                "t": int(datetime.now().timestamp())
+            }
+        
+        data = self._make_request("quote", {"symbol": symbol})
+        
+        if not data:
+            print(f"[Finnhub] API returned no quote for {symbol}, using dummy")
+            return {
+                "c": 150.25,
+                "d": 2.15,
+                "dp": 1.45,
+                "h": 152.30,
+                "l": 148.90,
+                "o": 149.50,
+                "pc": 148.10,
+                "t": int(datetime.now().timestamp())
+            }
+        
+        return data
     
     def get_company_profile(self, symbol: str) -> Optional[Dict]:
-        """Get company profile - Returns DUMMY DATA."""
-        print(f"[Finnhub] Returning dummy profile for {symbol}")
-        return {
-            "country": "US",
-            "currency": "USD",
-            "exchange": "NASDAQ",
-            "finnhubIndustry": "Technology",
-            "ipo": "1980-12-12",
+        """Get company profile."""
+        if not self.api_key:
+            print(f"[Finnhub] Using dummy profile for {symbol}")
+            return {
+                "country": "US",
+                "currency": "USD",
+                "exchange": "NASDAQ",
+                "finnhubIndustry": "Technology",
+                "ipo": "1980-12-12",
+                "logo": "https://logo.clearbit.com/apple.com",
+                "marketCapitalization": 2800.5,
+                "name": f"{symbol.upper()} Inc",
+                "phone": "1-408-996-1010",
+                "shareOutstanding": 15400.0,
+                "ticker": symbol.upper(),
+                "weburl": f"https://www.{symbol.lower()}.com"
+            }
+        
+        data = self._make_request("stock/profile", {"symbol": symbol})
+        
+        if not data:
+            print(f"[Finnhub] API returned no profile for {symbol}, using dummy")
+            return {
+                "country": "US",
+                "currency": "USD",
+                "exchange": "NASDAQ",
+                "finnhubIndustry": "Technology",
+                "ipo": "1980-12-12",
+                "logo": "https://logo.clearbit.com/apple.com",
+                "marketCapitalization": 2800.5,
+                "name": f"{symbol.upper()} Inc",
+                "phone": "1-408-996-1010",
+                "shareOutstanding": 15400.0,
+                "ticker": symbol.upper(),
+                "weburl": f"https://www.{symbol.lower()}.com"
+            }
+        
+        return data
             "logo": "https://logo.clearbit.com/apple.com",
             "marketCapitalization": 2800.5,
             "name": f"{symbol.upper()} Inc",
