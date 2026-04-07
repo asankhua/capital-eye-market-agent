@@ -638,12 +638,7 @@ async def finnhub_market_movers(type: str = "gainers"):
         return {"movers": movers, "type": type, "count": len(movers)}
     except Exception as e:
         logger.error("Error fetching Finnhub market movers: %s", e, exc_info=True)
-        # Return dummy data on error
-        dummy_movers = [
-            {"symbol": "RELIANCE", "name": "Reliance Industries", "price": 2875.50, "change": 42.80, "change_percent": 5.07, "volume": 4850000},
-            {"symbol": "TCS", "name": "Tata Consultancy", "price": 4165.20, "change": 182.30, "change_percent": 4.57, "volume": 5230000},
-        ]
-        return {"movers": dummy_movers, "type": type, "count": len(dummy_movers), "error": str(e)}
+        raise HTTPException(status_code=503, detail=f"Failed to fetch market movers: {str(e)}")
 
 
 @app.get("/finnhub/news")
@@ -660,10 +655,7 @@ async def finnhub_news(category: str = "general", symbol: str = None):
         return {"news": news, "count": len(news)}
     except Exception as e:
         logger.error("Error fetching Finnhub news: %s", e, exc_info=True)
-        dummy_news = [
-            {"category": "general", "datetime": 0, "headline": "Market data temporarily unavailable", "source": "System", "summary": str(e)[:100], "url": ""}
-        ]
-        return {"news": dummy_news, "count": 1, "error": str(e)}
+        raise HTTPException(status_code=503, detail=f"Failed to fetch news: {str(e)}")
 
 
 @app.get("/finnhub/sector_performance")
@@ -677,12 +669,7 @@ async def finnhub_sector_performance():
         return {"sectors": sectors, "count": len(sectors)}
     except Exception as e:
         logger.error("Error fetching Finnhub sector performance: %s", e, exc_info=True)
-        dummy_sectors = [
-            {"name": "Technology", "change_percent": 2.45},
-            {"name": "Financials", "change_percent": 1.82},
-            {"name": "Healthcare", "change_percent": 1.15},
-        ]
-        return {"sectors": dummy_sectors, "count": len(dummy_sectors), "error": str(e)}
+        raise HTTPException(status_code=503, detail=f"Failed to fetch sector performance: {str(e)}")
 
 
 @app.get("/debug/env")
@@ -736,28 +723,10 @@ async def twelve_data_market_overview():
     try:
         from backend.tools.twelve_data_tool import twelve_data_tool
         overview = twelve_data_tool.get_market_state()
-        
-        # OVERRIDE: Force current market values (April 7, 2026) - HF cache workaround
-        overview["indices"] = [
-            {"symbol": "NIFTY50", "name": "NIFTY 50", "price": 22968.25, "change": 255.15, "change_percent": 1.12},
-            {"symbol": "SENSEX", "name": "BSE SENSEX", "price": 74106.85, "change": 787.30, "change_percent": 1.07},
-        ]
-        overview["timestamp"] = "2026-04-07T09:30:00"
-        
         return overview
     except Exception as e:
         logger.error("Error fetching Twelve Data market overview: %s", e, exc_info=True)
-        # Return current market values
-        return {
-            "indices": [
-                {"symbol": "NIFTY50", "name": "NIFTY 50", "price": 22968.25, "change": 255.15, "change_percent": 1.12},
-                {"symbol": "SENSEX", "name": "BSE SENSEX", "price": 74106.85, "change": 787.30, "change_percent": 1.07},
-            ],
-            "top_gainers": [],
-            "top_losers": [],
-            "timestamp": "2026-04-07T09:30:00",
-            "error": str(e)
-        }
+        raise HTTPException(status_code=503, detail=f"Failed to fetch market data: {str(e)}")
 
 
 @app.get("/twelve_data/indices")
@@ -771,4 +740,4 @@ async def twelve_data_indices():
         return {"indices": indices, "count": len(indices)}
     except Exception as e:
         logger.error("Error fetching Twelve Data indices: %s", e, exc_info=True)
-        return {"indices": [], "count": 0, "error": str(e)}
+        raise HTTPException(status_code=503, detail=f"Failed to fetch indices: {str(e)}")

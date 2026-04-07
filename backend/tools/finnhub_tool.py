@@ -9,176 +9,6 @@ from backend.config import logger
 
 FINNHUB_BASE_URL = "https://finnhub.io/api/v1"
 
-# Fallback dummy data (used when API fails or no key)
-DUMMY_EARNINGS = [
-    {"symbol": "AAPL", "date": (datetime.now() + timedelta(days=5)).strftime("%Y-%m-%d"), "epsEstimate": 1.89, "revenueEstimate": 119200000000, "fiscalPeriod": "Q1 2026"},
-    {"symbol": "MSFT", "date": (datetime.now() + timedelta(days=8)).strftime("%Y-%m-%d"), "epsEstimate": 3.12, "revenueEstimate": 67800000000, "fiscalPeriod": "Q3 2026"},
-    {"symbol": "GOOGL", "date": (datetime.now() + timedelta(days=12)).strftime("%Y-%m-%d"), "epsEstimate": 1.95, "revenueEstimate": 84500000000, "fiscalPeriod": "Q1 2026"},
-    {"symbol": "AMZN", "date": (datetime.now() + timedelta(days=15)).strftime("%Y-%m-%d"), "epsEstimate": 1.35, "revenueEstimate": 156800000000, "fiscalPeriod": "Q1 2026"},
-    {"symbol": "TSLA", "date": (datetime.now() + timedelta(days=18)).strftime("%Y-%m-%d"), "epsEstimate": 0.89, "revenueEstimate": 26800000000, "fiscalPeriod": "Q1 2026"},
-    {"symbol": "META", "date": (datetime.now() + timedelta(days=22)).strftime("%Y-%m-%d"), "epsEstimate": 6.12, "revenueEstimate": 42500000000, "fiscalPeriod": "Q1 2026"},
-    {"symbol": "NVDA", "date": (datetime.now() + timedelta(days=25)).strftime("%Y-%m-%d"), "epsEstimate": 0.95, "revenueEstimate": 31200000000, "fiscalPeriod": "Q4 2025"},
-    {"symbol": "NFLX", "date": (datetime.now() + timedelta(days=28)).strftime("%Y-%m-%d"), "epsEstimate": 5.45, "revenueEstimate": 10200000000, "fiscalPeriod": "Q1 2026"},
-]
-
-DUMMY_MARKET_MOVERS = {
-    "gainers": [
-        {"symbol": "RELIANCE", "name": "Reliance Industries Ltd", "price": 2875.50, "change": 42.80, "change_percent": 5.07, "volume": 4850000},
-        {"symbol": "TCS", "name": "Tata Consultancy Services", "price": 4165.20, "change": 182.30, "change_percent": 4.57, "volume": 5230000},
-        {"symbol": "INFY", "name": "Infosys Ltd", "price": 1898.75, "change": 71.80, "change_percent": 3.94, "volume": 2150000},
-        {"symbol": "HDFCBANK", "name": "HDFC Bank Ltd", "price": 1575.30, "change": 50.90, "change_percent": 3.35, "volume": 9820000},
-        {"symbol": "BHARTIARTL", "name": "Bharti Airtel Ltd", "price": 985.45, "change": 27.20, "change_percent": 2.84, "volume": 1270000},
-        {"symbol": "ITC", "name": "ITC Ltd", "price": 425.65, "change": 10.85, "change_percent": 2.61, "volume": 4560000},
-        {"symbol": "KOTAKBANK", "name": "Kotak Mahindra Bank", "price": 1725.80, "change": 42.50, "change_percent": 2.52, "volume": 890000},
-        {"symbol": "WIPRO", "name": "Wipro Ltd", "price": 285.45, "change": 6.25, "change_percent": 2.24, "volume": 670000},
-        {"symbol": "ADANIENT", "name": "Adani Enterprises", "price": 2185.60, "change": 45.30, "change_percent": 2.12, "volume": 1230000},
-        {"symbol": "TITAN", "name": "Titan Company Ltd", "price": 3125.40, "change": 61.80, "change_percent": 2.01, "volume": 890000},
-    ],
-    "losers": [
-        {"symbol": "VEDL", "name": "Vedanta Ltd", "price": 425.80, "change": -26.90, "change_percent": -5.94, "volume": 7850000},
-        {"symbol": "YESBANK", "name": "Yes Bank Ltd", "price": 17.80, "change": -0.90, "change_percent": -4.80, "volume": 1560000},
-        {"symbol": "ZOMATO", "name": "Zomato Ltd", "price": 228.40, "change": -8.55, "change_percent": -3.60, "volume": 450000},
-        {"symbol": "PAYTM", "name": "One97 Communications", "price": 625.30, "change": -18.70, "change_percent": -2.90, "volume": 2340000},
-        {"symbol": "INDUSINDBK", "name": "IndusInd Bank", "price": 985.60, "change": -26.75, "change_percent": -2.64, "volume": 1870000},
-        {"symbol": "DLF", "name": "DLF Ltd", "price": 685.40, "change": -18.30, "change_percent": -2.60, "volume": 340000},
-        {"symbol": "JINDALSTEL", "name": "Jindal Steel & Power", "price": 785.20, "change": -17.80, "change_percent": -2.21, "volume": 98000},
-        {"symbol": "BANKBARODA", "name": "Bank of Baroda", "price": 215.80, "change": -4.25, "change_percent": -1.93, "volume": 120000},
-        {"symbol": "CANBK", "name": "Canara Bank", "price": 345.60, "change": -6.25, "change_percent": -1.78, "volume": 89000},
-        {"symbol": "IOB", "name": "Indian Overseas Bank", "price": 42.15, "change": -0.73, "change_percent": -1.71, "volume": 15600},
-    ],
-    "active": [
-        {"symbol": "RELIANCE", "name": "Reliance Industries Ltd", "price": 2875.50, "change": 42.80, "change_percent": 5.07, "volume": 9820000},
-        {"symbol": "HDFCBANK", "name": "HDFC Bank Ltd", "price": 1575.30, "change": 50.90, "change_percent": 3.35, "volume": 4850000},
-        {"symbol": "TCS", "name": "Tata Consultancy Services", "price": 4165.20, "change": 182.30, "change_percent": 4.57, "volume": 5230000},
-        {"symbol": "ITC", "name": "ITC Ltd", "price": 425.65, "change": 10.85, "change_percent": 2.61, "volume": 4560000},
-        {"symbol": "VEDL", "name": "Vedanta Ltd", "price": 425.80, "change": -26.90, "change_percent": -5.94, "volume": 7850000},
-        {"symbol": "INFY", "name": "Infosys Ltd", "price": 1898.75, "change": 71.80, "change_percent": 3.94, "volume": 4560000},
-        {"symbol": "BHARTIARTL", "name": "Bharti Airtel Ltd", "price": 985.45, "change": 27.20, "change_percent": 2.84, "volume": 3870000},
-        {"symbol": "KOTAKBANK", "name": "Kotak Mahindra Bank", "price": 1725.80, "change": 42.50, "change_percent": 2.52, "volume": 2150000},
-        {"symbol": "ADANIENT", "name": "Adani Enterprises", "price": 2185.60, "change": 45.30, "change_percent": 2.12, "volume": 2180000},
-        {"symbol": "TITAN", "name": "Titan Company Ltd", "price": 3125.40, "change": 61.80, "change_percent": 2.01, "volume": 2180000},
-    ]
-}
-
-DUMMY_NEWS = [
-    {
-        "category": "general",
-        "datetime": int((datetime.now() - timedelta(hours=2)).timestamp()),
-        "headline": "Reliance Industries Reports Record Q3 Profits",
-        "source": "Economic Times",
-        "summary": "Reliance Industries Ltd reported a 15% YoY increase in net profit for Q3 FY26, driven by strong performance in retail and Jio segments.",
-        "url": ""
-    },
-    {
-        "category": "general",
-        "datetime": int((datetime.now() - timedelta(hours=4)).timestamp()),
-        "headline": "TCS Wins $500 Million Deal from European Bank",
-        "source": "Business Standard",
-        "summary": "Tata Consultancy Services secures a major digital transformation contract, boosting its Europe operations significantly.",
-        "url": ""
-    },
-    {
-        "category": "general",
-        "datetime": int((datetime.now() - timedelta(hours=6)).timestamp()),
-        "headline": "HDFC Bank Merger Synergies Exceed Expectations",
-        "source": "Mint",
-        "summary": "The merged entity shows improved operational efficiency and cross-selling opportunities between banking segments.",
-        "url": ""
-    },
-    {
-        "category": "general",
-        "datetime": int((datetime.now() - timedelta(hours=8)).timestamp()),
-        "headline": "Infosys Announces Special Dividend",
-        "source": "CNBC-TV18",
-        "summary": "Infosys declared a special dividend of Rs 18 per share alongside quarterly results, rewarding shareholders.",
-        "url": ""
-    },
-    {
-        "category": "general",
-        "datetime": int((datetime.now() - timedelta(hours=12)).timestamp()),
-        "headline": "Bharti Airtel Expands 5G Coverage to 500 Cities",
-        "source": "Financial Express",
-        "summary": "Airtel accelerates 5G rollout across India, targeting complete coverage by end of 2026.",
-        "url": ""
-    },
-    {
-        "category": "forex",
-        "datetime": int((datetime.now() - timedelta(hours=3)).timestamp()),
-        "headline": "Rupee Strengthens Against Dollar",
-        "source": "Moneycontrol",
-        "summary": "Indian Rupee gains 0.5% against USD on strong FII inflows and positive trade data.",
-        "url": ""
-    },
-    {
-        "category": "crypto",
-        "datetime": int((datetime.now() - timedelta(hours=1)).timestamp()),
-        "headline": "SEBI Issues New Guidelines for Crypto Trading",
-        "source": "Business Line",
-        "summary": "Regulator introduces framework for monitoring virtual digital assets and protecting investors.",
-        "url": ""
-    },
-    {
-        "category": "merger",
-        "datetime": int((datetime.now() - timedelta(hours=5)).timestamp()),
-        "headline": "Adani Group Acquires Major Port Assets",
-        "source": "Economic Times",
-        "summary": "Strategic acquisition strengthens Adani Ports' position as India's largest port operator.",
-        "url": ""
-    },
-]
-
-DUMMY_SECTORS = [
-    {"name": "Technology", "change_percent": 2.85},
-    {"name": "Communication Services", "change_percent": 2.14},
-    {"name": "Consumer Discretionary", "change_percent": 1.67},
-    {"name": "Financials", "change_percent": 1.24},
-    {"name": "Healthcare", "change_percent": 0.85},
-    {"name": "Industrials", "change_percent": 0.42},
-    {"name": "Energy", "change_percent": -0.34},
-    {"name": "Real Estate", "change_percent": -0.68},
-    {"name": "Utilities", "change_percent": -0.95},
-    {"name": "Materials", "change_percent": -1.18},
-]
-
-DUMMY_COMPANY_NEWS = {
-    "AAPL": [
-        {
-            "category": "company",
-            "datetime": int((datetime.now() - timedelta(hours=6)).timestamp()),
-            "headline": "Apple iPhone 16 Production Ramping Up",
-            "source": "TechCrunch",
-            "summary": "Apple suppliers report increased orders ahead of fall launch. New AI features expected to drive upgrade cycle.",
-            "url": "https://finance.yahoo.com/news/apple-iphone-16"
-        },
-        {
-            "category": "company",
-            "datetime": int((datetime.now() - timedelta(hours=18)).timestamp()),
-            "headline": "Apple Vision Pro Sales Exceed Expectations",
-            "source": "Bloomberg",
-            "summary": "Mixed reality headset showing stronger than anticipated adoption among enterprise customers.",
-            "url": "https://finance.yahoo.com/news/apple-vision-pro"
-        },
-    ],
-    "TSLA": [
-        {
-            "category": "company",
-            "datetime": int((datetime.now() - timedelta(hours=3)).timestamp()),
-            "headline": "Tesla Robotaxi Service Launch Date Announced",
-            "source": "Electrek",
-            "summary": "Elon Musk confirms autonomous taxi service will begin operations in Austin, Texas next month.",
-            "url": "https://finance.yahoo.com/news/tesla-robotaxi"
-        },
-        {
-            "category": "company",
-            "datetime": int((datetime.now() - timedelta(hours=14)).timestamp()),
-            "headline": "Tesla Energy Storage Business Booms",
-            "source": "Reuters",
-            "summary": "Megapack deployments exceed targets as grid storage demand surges globally.",
-            "url": "https://finance.yahoo.com/news/tesla-energy"
-        },
-    ],
-}
-
 class FinnhubTool:
     """Tool for fetching market data from Finnhub API."""
     
@@ -191,31 +21,42 @@ class FinnhubTool:
             masked_key = self.api_key[:8] + "..." + self.api_key[-4:] if len(self.api_key) > 12 else "***"
             logger.info(f"[Finnhub] Initialized with API key from {self.api_key_source}: {masked_key}")
         else:
-            logger.warning("[Finnhub] NO API KEY FOUND - will use dummy data. Check HF Secrets for FINNHUB_API_KEY")
+            logger.error("[Finnhub] NO API KEY FOUND - Check HF Secrets for FINNHUB_API_KEY")
+            raise ValueError("FINNHUB_API_KEY not set in environment")
     
     def _make_request(self, endpoint: str, params: dict = None) -> dict:
+        """Make authenticated request to Finnhub API."""
         if not self.api_key:
-            return {}
+            raise ValueError("FINNHUB_API_KEY not set")
         
         url = f"{FINNHUB_BASE_URL}/{endpoint}"
         params = params or {}
         params["token"] = self.api_key
         
-        response = requests.get(url, params=params)
-        if response.status_code == 200:
-            return response.json()
-        else:
-            logger.error(f"[Finnhub] API request failed: {response.status_code}")
-            return {}
+        try:
+            logger.info(f"[Finnhub] Requesting: {endpoint}")
+            response = requests.get(url, params=params, timeout=15)
+            logger.info(f"[Finnhub] Response status: {response.status_code}")
+            
+            response.raise_for_status()
+            
+            if not response.text:
+                logger.error("[Finnhub] Empty response")
+                raise RuntimeError("Empty response from Finnhub API")
+            
+            try:
+                data = response.json()
+            except Exception as e:
+                logger.error(f"[Finnhub] JSON parse error: {e}, text: {response.text[:500]}")
+                raise RuntimeError(f"Invalid JSON response: {e}")
+            
+            return data
+        except requests.exceptions.RequestException as e:
+            logger.error(f"[Finnhub] API request failed: {e}")
+            raise RuntimeError(f"Finnhub API request failed: {e}")
     
     def get_earnings_calendar(self, symbol: Optional[str] = None, from_date: str = None, to_date: str = None) -> List[Dict]:
-        """Get earnings calendar - Returns DUMMY DATA."""
-        if not self.api_key:
-            print(f"[Finnhub] Returning dummy earnings data for {symbol if symbol else 'all symbols'}")
-            if symbol:
-                return [e for e in DUMMY_EARNINGS if e["symbol"] == symbol.upper()]
-            return DUMMY_EARNINGS
-        
+        """Get earnings calendar from Finnhub API."""
         if not from_date:
             from_date = datetime.now().strftime("%Y-%m-%d")
         if not to_date:
@@ -228,10 +69,8 @@ class FinnhubTool:
         data = self._make_request("calendar/earnings", params)
         
         if not data or "earningsCalendar" not in data:
-            print(f"[Finnhub] API returned no data, using dummy")
-            if symbol:
-                return [e for e in DUMMY_EARNINGS if e["symbol"] == symbol.upper()]
-            return DUMMY_EARNINGS
+            logger.error(f"[Finnhub] Invalid earnings response: {data}")
+            raise RuntimeError("Invalid response from Finnhub API for earnings calendar")
         
         earnings = []
         for item in data.get("earningsCalendar", []):
@@ -243,19 +82,56 @@ class FinnhubTool:
                 "fiscalPeriod": item.get("period", "")
             })
         
-        return earnings if earnings else DUMMY_EARNINGS
+        return earnings
     
     def get_market_news(self, category: str = "general", symbol: Optional[str] = None) -> List[Dict]:
-        """Get market news - Returns DUMMY DATA."""
-        print(f"[Finnhub] Returning dummy news for category={category}")
-        return DUMMY_NEWS
+        """Get market news from Finnhub API."""
+        if symbol:
+            # Company-specific news
+            end_date = datetime.now()
+            start_date = end_date - timedelta(days=7)
+            
+            data = self._make_request("company-news", {
+                "symbol": symbol,
+                "from": start_date.strftime("%Y-%m-%d"),
+                "to": end_date.strftime("%Y-%m-%d")
+            })
+            
+            if not data or not isinstance(data, list):
+                logger.error(f"[Finnhub] Invalid company news response for {symbol}: {data}")
+                raise RuntimeError(f"Invalid response from Finnhub API for company news: {symbol}")
+            
+            news = []
+            for item in data[:10]:
+                news.append({
+                    "datetime": item.get("datetime", 0),
+                    "headline": item.get("headline", ""),
+                    "source": item.get("source", ""),
+                    "summary": item.get("summary", ""),
+                    "url": item.get("url", "")
+                })
+            return news
+        else:
+            # General market news
+            data = self._make_request("news", {"category": category})
+            
+            if not data or not isinstance(data, list):
+                logger.error(f"[Finnhub] Invalid market news response: {data}")
+                raise RuntimeError("Invalid response from Finnhub API for market news")
+            
+            news = []
+            for item in data[:10]:
+                news.append({
+                    "datetime": item.get("datetime", 0),
+                    "headline": item.get("headline", ""),
+                    "source": item.get("source", ""),
+                    "summary": item.get("summary", ""),
+                    "url": item.get("url", "")
+                })
+            return news
     
     def get_market_movers(self, mover_type: str = "gainers") -> List[Dict]:
-        """Get market movers (gainers/losers/most active)."""
-        if not self.api_key:
-            print("[Finnhub] Using dummy market movers")
-            return DUMMY_MARKET_MOVERS.get(mover_type, DUMMY_MARKET_MOVERS["gainers"])
-        
+        """Get market movers (gainers/losers/most active) from Finnhub."""
         # Map our types to Finnhub types
         type_mapping = {
             "gainers": "percent_change_gainers",
@@ -269,8 +145,8 @@ class FinnhubTool:
         })
         
         if not data or "data" not in data:
-            print("[Finnhub] API returned no data, using dummy")
-            return DUMMY_MARKET_MOVERS.get(mover_type, DUMMY_MARKET_MOVERS["gainers"])
+            logger.error(f"[Finnhub] Invalid response for market movers: {data}")
+            raise RuntimeError("Invalid response from Finnhub API for market movers")
         
         # Transform Finnhub format to our format
         movers = []
@@ -284,19 +160,15 @@ class FinnhubTool:
                 "volume": item.get("volume", 0)
             })
         
-        return movers if movers else DUMMY_MARKET_MOVERS.get(mover_type, DUMMY_MARKET_MOVERS["gainers"])
+        return movers
     
     def get_sector_performance(self) -> List[Dict]:
-        """Get sector performance data."""
-        if not self.api_key:
-            print("[Finnhub] Using dummy sector data")
-            return DUMMY_SECTORS
-        
+        """Get sector performance data from Finnhub API."""
         data = self._make_request("stock/sector")
         
         if not data:
-            print("[Finnhub] API returned no sector data, using dummy")
-            return DUMMY_SECTORS
+            logger.error("[Finnhub] Invalid sector performance response")
+            raise RuntimeError("Invalid response from Finnhub API for sector performance")
         
         # Transform to our format
         sectors = []
@@ -308,13 +180,10 @@ class FinnhubTool:
                     "change_percent": round(change_pct, 2)
                 })
         
-        return sectors if sectors else DUMMY_SECTORS
+        return sectors
     
     def get_company_news(self, symbol: str) -> List[Dict]:
         """Get news for specific company."""
-        if not self.api_key:
-            return []
-        
         end_date = datetime.now()
         start_date = end_date - timedelta(days=7)
         
@@ -325,7 +194,8 @@ class FinnhubTool:
         })
         
         if not data or not isinstance(data, list):
-            return []
+            logger.error(f"[Finnhub] Invalid company news response for {symbol}")
+            raise RuntimeError(f"Invalid response from Finnhub API for company news: {symbol}")
         
         news = []
         for item in data[:5]:
@@ -368,77 +238,25 @@ class FinnhubTool:
                 "fiscalPeriod": item.get("period", "")
             })
         
-        return earnings if earnings else DUMMY_EARNINGS
+        return earnings
     
     def get_stock_quote(self, symbol: str) -> Optional[Dict]:
-        """Get stock quote."""
-        if not self.api_key:
-            print(f"[Finnhub] Using dummy quote for {symbol}")
-            return {
-                "c": 150.25,
-                "d": 2.15,
-                "dp": 1.45,
-                "h": 152.30,
-                "l": 148.90,
-                "o": 149.50,
-                "pc": 148.10,
-                "t": int(datetime.now().timestamp())
-            }
-        
+        """Get stock quote from Finnhub API."""
         data = self._make_request("quote", {"symbol": symbol})
         
         if not data:
-            print(f"[Finnhub] API returned no quote for {symbol}, using dummy")
-            return {
-                "c": 150.25,
-                "d": 2.15,
-                "dp": 1.45,
-                "h": 152.30,
-                "l": 148.90,
-                "o": 149.50,
-                "pc": 148.10,
-                "t": int(datetime.now().timestamp())
-            }
+            logger.error(f"[Finnhub] Invalid quote response for {symbol}")
+            raise RuntimeError(f"Invalid response from Finnhub API for quote: {symbol}")
         
         return data
     
     def get_company_profile(self, symbol: str) -> Optional[Dict]:
-        """Get company profile."""
-        if not self.api_key:
-            print(f"[Finnhub] Using dummy profile for {symbol}")
-            return {
-                "country": "US",
-                "currency": "USD",
-                "exchange": "NASDAQ",
-                "finnhubIndustry": "Technology",
-                "ipo": "1980-12-12",
-                "logo": "https://logo.clearbit.com/apple.com",
-                "marketCapitalization": 2800.5,
-                "name": f"{symbol.upper()} Inc",
-                "phone": "1-408-996-1010",
-                "shareOutstanding": 15400.0,
-                "ticker": symbol.upper(),
-                "weburl": f"https://www.{symbol.lower()}.com"
-            }
-        
-        data = self._make_request("stock/profile", {"symbol": symbol})
+        """Get company profile from Finnhub API."""
+        data = self._make_request("stock/profile2", {"symbol": symbol})
         
         if not data:
-            print(f"[Finnhub] API returned no profile for {symbol}, using dummy")
-            return {
-                "country": "US",
-                "currency": "USD",
-                "exchange": "NASDAQ",
-                "finnhubIndustry": "Technology",
-                "ipo": "1980-12-12",
-                "logo": "https://logo.clearbit.com/apple.com",
-                "marketCapitalization": 2800.5,
-                "name": f"{symbol.upper()} Inc",
-                "phone": "1-408-996-1010",
-                "shareOutstanding": 15400.0,
-                "ticker": symbol.upper(),
-                "weburl": f"https://www.{symbol.lower()}.com"
-            }
+            logger.error(f"[Finnhub] Invalid profile response for {symbol}")
+            raise RuntimeError(f"Invalid response from Finnhub API for profile: {symbol}")
         
         return data
 

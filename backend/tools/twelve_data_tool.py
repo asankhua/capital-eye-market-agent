@@ -9,31 +9,6 @@ from backend.config import logger
 
 TWELVE_DATA_BASE_URL = "https://api.twelvedata.com"
 
-# DUMMY DATA FOR UI TESTING (fallback when API fails)
-DUMMY_INDICES = [
-    {"symbol": "NIFTY50", "name": "NIFTY 50", "price": 22968.25, "change": 255.15, "change_percent": 1.12},
-    {"symbol": "SENSEX", "name": "BSE SENSEX", "price": 74106.85, "change": 787.30, "change_percent": 1.07},
-    {"symbol": "NIFTYBANK", "name": "NIFTY Bank", "price": 48234.78, "change": -89.12, "change_percent": -0.18},
-    {"symbol": "NIFTYIT", "name": "NIFTY IT", "price": 38456.23, "change": 245.67, "change_percent": 0.64},
-    {"symbol": "INDIAVIX", "name": "India VIX", "price": 14.23, "change": -0.45, "change_percent": -3.07},
-]
-
-DUMMY_MOVERS = {
-    "gainers": [
-        {"symbol": "RELIANCE", "name": "Reliance Industries Ltd", "price": 2875.50, "change": 42.80, "change_percent": 5.07, "volume": 4850000},
-        {"symbol": "TCS", "name": "Tata Consultancy Services", "price": 4165.20, "change": 182.30, "change_percent": 4.57, "volume": 5230000},
-        {"symbol": "INFY", "name": "Infosys Ltd", "price": 1898.75, "change": 71.80, "change_percent": 3.94, "volume": 2150000},
-        {"symbol": "HDFCBANK", "name": "HDFC Bank Ltd", "price": 1575.30, "change": 50.90, "change_percent": 3.35, "volume": 9820000},
-        {"symbol": "BHARTIARTL", "name": "Bharti Airtel Ltd", "price": 985.45, "change": 27.20, "change_percent": 2.84, "volume": 1270000},
-    ],
-    "losers": [
-        {"symbol": "VEDL", "name": "Vedanta Ltd", "price": 425.80, "change": -26.90, "change_percent": -5.94, "volume": 7850000},
-        {"symbol": "YESBANK", "name": "Yes Bank Ltd", "price": 17.80, "change": -0.90, "change_percent": -4.80, "volume": 1560000},
-        {"symbol": "ZOMATO", "name": "Zomato Ltd", "price": 228.40, "change": -8.55, "change_percent": -3.60, "volume": 450000},
-        {"symbol": "PAYTM", "name": "One97 Communications", "price": 625.30, "change": -18.70, "change_percent": -2.90, "volume": 2340000},
-        {"symbol": "INDUSINDBK", "name": "IndusInd Bank", "price": 985.60, "change": -26.75, "change_percent": -2.64, "volume": 1870000},
-    ]
-}
 
 class TwelveDataTool:
     """Tool for fetching market data from Twelve Data API."""
@@ -47,49 +22,47 @@ class TwelveDataTool:
             masked_key = self.api_key[:8] + "..." + self.api_key[-4:] if len(self.api_key) > 12 else "***"
             logger.info(f"[TwelveData] Initialized with API key from {self.api_key_source}: {masked_key}")
         else:
-            logger.warning("[TwelveData] NO API KEY FOUND - will use dummy data. Check HF Secrets for TWELVE_DATA_API_KEY")
+            logger.error("[TwelveData] NO API KEY FOUND - Check HF Secrets for TWELVE_DATA_API_KEY")
+            raise ValueError("TWELVE_DATA_API_KEY not set in environment")
     
     def _make_request(self, endpoint: str, params: dict = None) -> dict:
         """Make authenticated request to Twelve Data API."""
         if not self.api_key:
-            return {}
+            raise ValueError("TWELVE_DATA_API_KEY not set")
         
         url = f"{TWELVE_DATA_BASE_URL}/{endpoint}"
         params = params or {}
         params['apikey'] = self.api_key
         
         try:
-            logger.info(f"[TwelveData] Requesting: {url} with params: {params}")
+            logger.info(f"[TwelveData] Requesting: {endpoint}")
             response = requests.get(url, params=params, timeout=15)
             logger.info(f"[TwelveData] Response status: {response.status_code}")
-            logger.info(f"[TwelveData] Response text: {response.text[:200]}")
             
             response.raise_for_status()
             
             if not response.text:
                 logger.error("[TwelveData] Empty response")
-                return {}
+                raise RuntimeError("Empty response from Twelve Data API")
             
             try:
                 data = response.json()
             except Exception as e:
-                logger.error(f"[TwelveData] JSON parse error: {e}, text: {response.text[:500]}")
-                return {}
+                logger.error(f"[TwelveData] JSON parse error: {e}")
+                raise RuntimeError(f"Invalid JSON response from Twelve Data API: {e}")
             
             if data.get("status") == "error":
-                logger.error(f"[TwelveData] API error: {data.get('message', 'Unknown error')}")
-                return {}
+                error_msg = data.get("message", "Unknown error")
+                logger.error(f"[TwelveData] API error: {error_msg}")
+                raise RuntimeError(f"Twelve Data API error: {error_msg}")
+            
             return data
-        except Exception as e:
+        except requests.exceptions.RequestException as e:
             logger.error(f"[TwelveData] API request failed: {e}")
-            return {}
+            raise RuntimeError(f"Twelve Data API request failed: {e}")
     
     def get_market_movers(self, direction: str = "gainers", outputsize: int = 10) -> List[Dict]:
         """Get market movers: gainers or losers."""
-        if not self.api_key:
-            logger.warning("[TwelveData] Using dummy market movers - no API key")
-            return DUMMY_MOVERS.get(direction, DUMMY_MOVERS["gainers"])[:outputsize]
-        
         # Use Finnhub for movers (Twelve Data doesn't have direct movers endpoint)
         from backend.tools.finnhub_tool import finnhub_tool
         return finnhub_tool.get_market_movers(direction)[:outputsize]
@@ -98,57 +71,43 @@ class TwelveDataTool:
         """Get major Indian market indices using Twelve Data API."""
         indices_data = []
         
-        # Primary: Try Twelve Data API for Indian indices
-        if self.api_key:
-            # Twelve Data uses different symbol formats for Indian indices
-            indices_to_fetch = [
-                ("NSEI", "NIFTY 50"),  # NIFTY 50 on NSE
-                ("BSESN", "BSE SENSEX"),  # SENSEX on BSE
-                ("NSEBANK", "NIFTY Bank"),  # NIFTY Bank
-            ]
+        # Twelve Data uses different symbol formats for Indian indices
+        indices_to_fetch = [
+            ("NSEI", "NIFTY 50"),  # NIFTY 50 on NSE
+            ("BSESN", "BSE SENSEX"),  # SENSEX on BSE
+            ("NSEBANK", "NIFTY Bank"),  # NIFTY Bank
+        ]
+        
+        for symbol, name in indices_to_fetch:
+            logger.info(f"[TwelveData] Fetching {name} ({symbol})")
+            data = self._make_request("quote", {"symbol": symbol, "interval": "1day"})
             
-            for symbol, name in indices_to_fetch:
-                logger.info(f"[TwelveData] Fetching {name} ({symbol})")
-                data = self._make_request("quote", {"symbol": symbol, "interval": "1day"})
-                
-                if data and "close" in data:
-                    try:
-                        prev_close = float(data.get("previous_close", 0) or 0)
-                        current = float(data.get("close", 0) or 0)
-                        change = current - prev_close if prev_close else 0
-                        change_pct = (change / prev_close * 100) if prev_close else 0
-                        
-                        indices_data.append({
-                            "symbol": symbol,
-                            "name": name,
-                            "price": round(current, 2),
-                            "change": round(change, 2),
-                            "change_percent": round(change_pct, 2)
-                        })
-                        logger.info(f"[TwelveData] {name}: {current:,.2f} ({change_pct:+.2f}%)")
-                    except (ValueError, TypeError) as e:
-                        logger.warning(f"[TwelveData] Error parsing {name}: {e}")
-                else:
-                    logger.warning(f"[TwelveData] No data for {name}: {data}")
+            if data and "close" in data:
+                try:
+                    prev_close = float(data.get("previous_close", 0) or 0)
+                    current = float(data.get("close", 0) or 0)
+                    change = current - prev_close if prev_close else 0
+                    change_pct = (change / prev_close * 100) if prev_close else 0
+                    
+                    indices_data.append({
+                        "symbol": symbol,
+                        "name": name,
+                        "price": round(current, 2),
+                        "change": round(change, 2),
+                        "change_percent": round(change_pct, 2)
+                    })
+                    logger.info(f"[TwelveData] {name}: {current:,.2f} ({change_pct:+.2f}%)")
+                except (ValueError, TypeError) as e:
+                    logger.error(f"[TwelveData] Error parsing {name}: {e}")
+                    raise RuntimeError(f"Error parsing {name} data: {e}")
+            else:
+                logger.error(f"[TwelveData] No data returned for {name}")
+                raise RuntimeError(f"No data returned from Twelve Data API for {name}")
         
-        if indices_data:
-            logger.info(f"[TwelveData] Successfully fetched {len(indices_data)} indices")
-            return indices_data
-        
-        logger.warning("[TwelveData] Using dummy data - API failed or no key")
-        return DUMMY_INDICES
+        return indices_data
     
     def get_market_state(self) -> Dict[str, Any]:
         """Get overall market state/overview."""
-        if not self.api_key:
-            logger.warning("[TwelveData] Using dummy market state - no API key")
-            return {
-                "indices": DUMMY_INDICES,
-                "top_gainers": DUMMY_MOVERS["gainers"],
-                "top_losers": DUMMY_MOVERS["losers"],
-                "timestamp": datetime.now().isoformat()
-            }
-        
         logger.info("[TwelveData] Fetching market state...")
         indices = self.get_indices()
         gainers = self.get_market_movers("gainers", 5)
@@ -162,6 +121,7 @@ class TwelveDataTool:
             "top_losers": losers,
             "timestamp": datetime.now().isoformat()
         }
+
 
 # Global instance
 twelve_data_tool = TwelveDataTool()
