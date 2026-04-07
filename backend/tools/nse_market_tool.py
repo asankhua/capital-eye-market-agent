@@ -25,21 +25,19 @@ class NSEMarketTool:
         logger.info("[NSEMarketTool] Initialized nsetools for Indian market data")
     
     def get_indices(self) -> List[Dict]:
-        """Get major Indian market indices using nsetools - fetches all available indices."""
+        """Get major Indian market indices using nsetools - fetches only specified indices."""
         indices_data = []
         
-        # Major Indian indices to fetch
+        # Specific indices to fetch (as requested by user)
         major_indices = [
             "NIFTY 50",
-            "NIFTY NEXT 50",
-            "NIFTY 100",
-            "NIFTY 200",
-            "NIFTY 500",
-            "NIFTY MIDCAP 50",
-            "NIFTY MIDCAP 100",
             "NIFTY MIDCAP 150",
-            "NIFTY SMALLCAP 50",
-            "NIFTY SMALLCAP 100",
+            "NIFTY SMALLCAP 250",
+            "NIFTY ALPHA 50",
+            "NIFTY MIDCAP150 MOMENTUM 50",
+            "NIFTY50 EQUAL WEIGHT",
+            "NIFTY NEXT 50",
+            "NIFTY INDIA RAILWAYS PSU",
             "NIFTY BANK",
             "NIFTY IT",
             "NIFTY AUTO",
@@ -47,18 +45,8 @@ class NSEMarketTool:
             "NIFTY FMCG",
             "NIFTY METAL",
             "NIFTY REALTY",
-            "NIFTY MEDIA",
-            "NIFTY ENERGY",
-            "NIFTY INFRA",
             "NIFTY PSU BANK",
-            "NIFTY PRIVATE BANK",
-            "NIFTY FIN SERVICE",
-            "NIFTY CONSUMPTION",
-            "NIFTY MNC",
-            "NIFTY PSE",
-            "NIFTY CPSE",
             "NIFTY COMMODITIES",
-            "NIFTY SERV SECTOR",
             "INDIA VIX",
         ]
         
@@ -79,26 +67,6 @@ class NSEMarketTool:
             except Exception as e:
                 logger.warning(f"[NSEMarketTool] Could not fetch {index_name}: {e}")
                 continue
-        
-        # Also fetch all available indices to catch any we missed (including SENSEX)
-        try:
-            logger.info("[NSEMarketTool] Fetching all available indices")
-            all_indices = self.nse.get_all_index_quote()
-            existing_symbols = {idx["symbol"] for idx in indices_data}
-            
-            for idx in all_indices:
-                idx_symbol = idx.get("indexSymbol", "").replace(" ", "")
-                if idx_symbol and idx_symbol not in existing_symbols:
-                    indices_data.append({
-                        "symbol": idx_symbol,
-                        "name": idx.get("index", ""),
-                        "price": float(idx.get("last", 0)),
-                        "change": float(idx.get("variation", 0)),
-                        "change_percent": float(idx.get("percentChange", 0))
-                    })
-                    logger.info(f"[NSEMarketTool] Additional index: {idx.get('index')} @ {idx.get('last')}")
-        except Exception as e:
-            logger.error(f"[NSEMarketTool] Error fetching all indices: {e}")
         
         if not indices_data:
             raise RuntimeError("No index data retrieved from NSE")
@@ -138,18 +106,14 @@ class NSEMarketTool:
             raise RuntimeError(f"Failed to fetch market movers: {e}")
     
     def get_market_state(self) -> Dict[str, Any]:
-        """Get overall market state/overview."""
+        """Get overall market state/overview - indices only (no gainers/losers)."""
         logger.info("[NSEMarketTool] Fetching market state...")
         indices = self.get_indices()
-        gainers = self.get_market_movers("gainers")[:5]
-        losers = self.get_market_movers("losers")[:5]
         
-        logger.info(f"[NSEMarketTool] Market state: {len(indices)} indices, {len(gainers)} gainers, {len(losers)} losers")
+        logger.info(f"[NSEMarketTool] Market state: {len(indices)} indices")
         
         return {
             "indices": indices,
-            "top_gainers": gainers,
-            "top_losers": losers,
             "timestamp": datetime.now().isoformat()
         }
 
