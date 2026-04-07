@@ -866,3 +866,27 @@ async def indian_category_news(category: str, max_results: int = 10):
     except Exception as e:
         logger.error(f"Error fetching Indian category news for {category}: %s", e, exc_info=True)
         raise HTTPException(status_code=503, detail=f"Failed to fetch news: {str(e)}")
+
+
+@app.get("/dividends/announcements")
+async def dividend_announcements(days_back: int = 30, days_ahead: int = 30):
+    """Get dividend announcements from BSE India - recent and upcoming."""
+    logger.info(f"GET /dividends/announcements - days_back={days_back}, days_ahead={days_ahead}")
+    
+    try:
+        from backend.tools.bse_corporate_actions_tool import bse_corporate_actions_tool
+        
+        # Get recent dividends
+        recent = await bse_corporate_actions_tool.get_recent_dividends(days_back)
+        
+        # Get upcoming dividends
+        upcoming = await bse_corporate_actions_tool.get_upcoming_dividends(days_ahead)
+        
+        return {
+            "recent": recent,
+            "upcoming": upcoming,
+            "cached_at": datetime.now().isoformat()
+        }
+    except Exception as e:
+        logger.error(f"Error fetching dividend announcements: %s", e, exc_info=True)
+        raise HTTPException(status_code=503, detail=f"Failed to fetch dividends: {str(e)}")

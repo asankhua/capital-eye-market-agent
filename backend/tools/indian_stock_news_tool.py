@@ -187,52 +187,6 @@ class IndianStockNewsTool:
             }
 
     @staticmethod
-    def _get_sample_news(max_results: int = 10) -> list[dict]:
-        """Return sample Indian market news when RSS feeds fail."""
-        return [
-            {
-                "headline": "Sensex closes at record high amid strong buying in banking stocks",
-                "source": "Sample Data",
-                "url": "https://www.moneycontrol.com",
-                "datetime": int(datetime.now().timestamp()),
-                "summary": "The BSE Sensex ended at a new record high, driven by strong buying in banking and financial stocks. Nifty also closed higher.",
-                "category": "general"
-            },
-            {
-                "headline": "RBI keeps repo rate unchanged at 6.5%, maintains neutral stance",
-                "source": "Sample Data",
-                "url": "https://www.moneycontrol.com",
-                "datetime": int(datetime.now().timestamp()) - 3600,
-                "summary": "The Reserve Bank of India decided to keep the repo rate unchanged at 6.5% while maintaining a neutral monetary policy stance.",
-                "category": "general"
-            },
-            {
-                "headline": "FIIs net buyers in Indian equities for third consecutive month",
-                "source": "Sample Data",
-                "url": "https://www.moneycontrol.com",
-                "datetime": int(datetime.now().timestamp()) - 7200,
-                "summary": "Foreign Institutional Investors continued their buying streak in Indian equities for the third month in a row.",
-                "category": "general"
-            },
-            {
-                "headline": "IT sector leads gains as rupee weakens against dollar",
-                "source": "Sample Data",
-                "url": "https://www.moneycontrol.com",
-                "datetime": int(datetime.now().timestamp()) - 10800,
-                "summary": "IT stocks surged on BSE and NSE as the weakening rupee boosted export earnings for IT companies.",
-                "category": "general"
-            },
-            {
-                "headline": "IPO market sees robust activity with 15 new listings in Q1",
-                "source": "Sample Data",
-                "url": "https://www.moneycontrol.com",
-                "datetime": int(datetime.now().timestamp()) - 14400,
-                "summary": "The Indian IPO market witnessed strong activity in Q1 with 15 new listings, raising over Rs 50,000 crore.",
-                "category": "general"
-            }
-        ][:max_results]
-
-    @staticmethod
     async def get_company_news(symbol: str, max_results: int = 5) -> dict[str, Any]:
         """Fetch news for a specific Indian company from RSS feeds."""
         clean_symbol = symbol.upper().replace(".NS", "").replace(".BO", "")
