@@ -695,6 +695,20 @@ async def finnhub_sector_performance():
         raise HTTPException(status_code=503, detail=f"Failed to fetch sector performance: {str(e)}")
 
 
+@app.get("/nse/sector_performance")
+async def nse_sector_performance():
+    """Get Indian sector performance data from NSE sectoral indices."""
+    logger.info("GET /nse/sector_performance - Using NSE Indian sectors")
+    
+    try:
+        from backend.tools.nse_market_tool import nse_market_tool
+        sectors = nse_market_tool.get_sector_performance()
+        return {"sectors": sectors, "count": len(sectors), "source": "NSE Sectoral Indices"}
+    except Exception as e:
+        logger.error("Error fetching NSE sector performance: %s", e, exc_info=True)
+        raise HTTPException(status_code=503, detail=f"Failed to fetch sector performance: {str(e)}")
+
+
 @app.get("/debug/env")
 async def debug_env():
     """Debug endpoint to check environment variables (keys masked)."""

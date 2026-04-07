@@ -208,8 +208,8 @@ export const api = {
 
   // ── NSE Sector API ───────────────────────────────────────────────
   getNSESectorPerformance: async (): Promise<{sectors: any[], count: number, source: string}> => {
-    debugLogger.logApiRequest('/finnhub/sector_performance', {});
-    const response = await apiClient.get('/finnhub/sector_performance');
+    debugLogger.logApiRequest('/nse/sector_performance', {});
+    const response = await apiClient.get('/nse/sector_performance');
     return response.data;
   },
   getTwelveDataMarketOverview: async (): Promise<any> => {
