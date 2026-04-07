@@ -21,7 +21,7 @@ export const SectorAnalysis: React.FC = () => {
   const loadSectors = async () => {
     setLoading(true);
     try {
-      const data = await api.getFinnhubSectorPerformance();
+      const data = await api.getNSESectorPerformance();
       // Map NSE sector names to match interface
       const mappedSectors = (data.sectors || []).map((s: any) => ({
         sector: s.name || s.sector,

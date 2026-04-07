@@ -199,7 +199,12 @@ export const api = {
     return response.data;
   },
 
-  // ── Twelve Data API ────────────────────────────────────────────────
+  // ── NSE Sector API ───────────────────────────────────────────────
+  getNSESectorPerformance: async (): Promise<{sectors: any[], count: number, source: string}> => {
+    debugLogger.logApiRequest('/nse/sector_performance', {});
+    const response = await apiClient.get('/nse/sector_performance');
+    return response.data;
+  },
   getTwelveDataMarketOverview: async (): Promise<any> => {
     debugLogger.logApiRequest('/twelve_data/market_overview', {});
     const response = await apiClient.get('/twelve_data/market_overview');
