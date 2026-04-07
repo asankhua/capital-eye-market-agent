@@ -19,6 +19,7 @@ export const DividendTracker: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
+  const [lastUpdated, setLastUpdated] = useState<string>('');
 
   useEffect(() => {
     loadDividends();
@@ -34,6 +35,14 @@ export const DividendTracker: React.FC = () => {
       } else {
         setDividends([]);
       }
+      setLastUpdated(`${new Date().toLocaleString('en-IN', { 
+        timeZone: 'Asia/Kolkata',
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      })} IST (from ${data.source || 'NSE'})`);
     } catch (err) {
       setError('Failed to load dividend announcements');
       console.error(err);
@@ -117,7 +126,15 @@ export const DividendTracker: React.FC = () => {
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px' }}>
         <Coins size={28} color="#10b981" />
-        <h2 style={{ fontSize: '24px', fontWeight: 700, color: '#0f172a' }}>Dividend Announcements</h2>
+        <div style={{ flex: 1 }}>
+          <h2 style={{ fontSize: '24px', fontWeight: 700, color: '#0f172a' }}>Dividend Announcements</h2>
+          {lastUpdated && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '4px', fontSize: '12px', color: '#6b7280' }}>
+              <Clock size={12} />
+              <span>Last updated: {lastUpdated}</span>
+            </div>
+          )}
+        </div>
         <span style={{
           marginLeft: 'auto',
           fontSize: '14px',

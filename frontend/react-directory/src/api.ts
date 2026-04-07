@@ -199,6 +199,13 @@ export const api = {
     return response.data;
   },
 
+  // ── NSE Market Movers API ─────────────────────────────────────────
+  getNSEMarketMovers: async (type: string = 'gainers'): Promise<{movers: any[], type: string, count: number, source: string}> => {
+    debugLogger.logApiRequest('/twelve_data/market_movers', { type });
+    const response = await apiClient.get('/twelve_data/market_movers', { params: { type } });
+    return response.data;
+  },
+
   // ── NSE Sector API ───────────────────────────────────────────────
   getNSESectorPerformance: async (): Promise<{sectors: any[], count: number, source: string}> => {
     debugLogger.logApiRequest('/nse/sector_performance', {});

@@ -28,16 +28,16 @@ export const MarketMovers: React.FC = () => {
   const loadMovers = async () => {
     setLoading(true);
     try {
-      const data = await api.getTwelveDataMarketMovers(type);
+      const data = await api.getNSEMarketMovers(type);
       setMovers(data.movers || []);
-      setLastUpdated(new Date().toLocaleString('en-IN', { 
+      setLastUpdated(`${new Date().toLocaleString('en-IN', { 
         timeZone: 'Asia/Kolkata',
         day: 'numeric',
         month: 'short',
         year: 'numeric',
         hour: '2-digit',
         minute: '2-digit'
-      }));
+      })} IST (from ${data.source || 'NSE'})`);
     } catch (err) {
       setError('Failed to load market movers');
       console.error(err);

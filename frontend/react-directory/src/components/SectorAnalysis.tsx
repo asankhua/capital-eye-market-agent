@@ -28,14 +28,14 @@ export const SectorAnalysis: React.FC = () => {
         change_percent: s.change_percent
       }));
       setSectors(mappedSectors);
-      setLastUpdated(new Date().toLocaleString('en-IN', { 
+      setLastUpdated(`${new Date().toLocaleString('en-IN', { 
         timeZone: 'Asia/Kolkata',
         day: 'numeric',
         month: 'short',
         year: 'numeric',
         hour: '2-digit',
         minute: '2-digit'
-      }));
+      })} IST (from ${data.source || 'NSE'})`);
     } catch (err) {
       setError('Failed to load sector performance');
       console.error(err);

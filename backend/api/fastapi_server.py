@@ -521,6 +521,9 @@ async def nse_dividends(ticker: str = None):
     try:
         from backend.tools.nse_dividend_tool import nse_dividend_tool
         result = await nse_dividend_tool.get_dividend_announcements(ticker)
+        # Add source attribution
+        if isinstance(result, dict):
+            result["source"] = "NSE Corporate Actions"
         return result
     except Exception as e:
         logger.error(f"Error fetching NSE dividends: {e}", exc_info=True)
@@ -697,16 +700,11 @@ async def debug_env():
     """Debug endpoint to check environment variables (keys masked)."""
     import os
     
-    finnhub_key = os.getenv("FINNHUB_API_KEY", "")
-    twelve_key = os.getenv("TWELVE_DATA_API_KEY", "")
     groq_key = os.getenv("GROQ_API_KEY", "")
     
     return {
-        "finnhub_api_key_set": bool(finnhub_key),
-        "finnhub_api_key_preview": finnhub_key[:8] + "..." + finnhub_key[-4:] if len(finnhub_key) > 12 else ("***" if finnhub_key else "NOT SET"),
-        "twelve_data_api_key_set": bool(twelve_key),
-        "twelve_data_api_key_preview": twelve_key[:8] + "..." + twelve_key[-4:] if len(twelve_key) > 12 else ("***" if twelve_key else "NOT SET"),
         "groq_api_key_set": bool(groq_key),
+        "groq_api_key_preview": groq_key[:8] + "..." + groq_key[-4:] if len(groq_key) > 12 else ("***" if groq_key else "NOT SET"),
         "environment": dict(os.environ) if os.getenv("DEBUG_FULL_ENV") else "Set DEBUG_FULL_ENV to see all"
     }
 
@@ -799,15 +797,15 @@ async def twelve_data_indices():
 
 @app.get("/twelve_data/market_movers")
 async def twelve_data_market_movers(type: str = "gainers"):
-    """Get Indian market movers (gainers/losers) from nsetools."""
+    """Get Indian market movers (gainers/losers) from NSE."""
     logger.info("GET /twelve_data/market_movers type=%s", type)
     
     try:
-        from backend.tools.twelve_data_tool import twelve_data_tool
-        movers = twelve_data_tool.get_market_movers(type)
-        return {"movers": movers, "type": type, "count": len(movers)}
+        from backend.tools.nse_market_tool import nse_market_tool
+        movers = nse_market_tool.get_market_movers(type)
+        return {"movers": movers, "type": type, "count": len(movers), "source": "NSE"}
     except Exception as e:
-        logger.error("Error fetching Twelve Data market movers: %s", e, exc_info=True)
+        logger.error("Error fetching NSE market movers: %s", e, exc_info=True)
         raise HTTPException(status_code=503, detail=f"Failed to fetch market movers: {str(e)}")
 
 
