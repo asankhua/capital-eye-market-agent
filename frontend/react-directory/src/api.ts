@@ -146,17 +146,17 @@ export const api = {
     return response.data;
   },
 
-  // ── MoneyControl Dividend API ─────────────────────────────────────
+  // ── NSE Dividend API ─────────────────────────────────────────────
   getMoneyControlDividends: async (ticker?: string): Promise<DividendInfo & { source: string }> => {
-    debugLogger.logApiRequest('/moneycontrol/dividends', { ticker });
-    const response = await apiClient.get('/moneycontrol/dividends', { params: { ticker } });
+    debugLogger.logApiRequest('/nse/dividends', { ticker });
+    const response = await apiClient.get('/nse/dividends', { params: { ticker } });
     return response.data;
   },
 
-  // ── Get All MoneyControl Dividends ────────────────────────────────
+  // ── Get All NSE Dividends ─────────────────────────────────────────
   getAllMoneyControlDividends: async (): Promise<{ announcements: any[], count: number, search_date: string, source: string }> => {
-    debugLogger.logApiRequest('/moneycontrol/dividends/all', {});
-    const response = await apiClient.get('/moneycontrol/dividends/all');
+    debugLogger.logApiRequest('/nse/dividends', {});
+    const response = await apiClient.get('/nse/dividends');
     return response.data;
   },
 
