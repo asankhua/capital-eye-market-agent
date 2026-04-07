@@ -1,4 +1,4 @@
-"""Market data integration using Twelve Data API for Indian indices."""
+"""Market data integration using Twelve Data API for US markets and yfinance for Indian markets."""
 import os
 import requests
 from typing import List, Dict, Any, Optional
@@ -6,6 +6,14 @@ from datetime import datetime
 
 # Import the logger from config
 from backend.config import logger
+
+# Try to import yfinance for Indian market data
+try:
+    import yfinance as yf
+    YFINANCE_AVAILABLE = True
+except ImportError:
+    YFINANCE_AVAILABLE = False
+    logger.warning("[MarketData] yfinance not available for Indian markets")
 
 TWELVE_DATA_BASE_URL = "https://api.twelvedata.com"
 
@@ -68,41 +76,46 @@ class TwelveDataTool:
         return finnhub_tool.get_market_movers(direction)[:outputsize]
     
     def get_indices(self) -> List[Dict]:
-        """Get major Indian market indices using Twelve Data API."""
+        """Get major Indian market indices using Yahoo Finance (yfinance)."""
+        if not YFINANCE_AVAILABLE:
+            logger.error("[MarketData] yfinance not available for Indian indices")
+            raise RuntimeError("yfinance library not available for Indian market data")
+        
         indices_data = []
         
-        # Twelve Data uses different symbol formats for Indian indices
+        # Use yfinance with Yahoo Finance ticker symbols for Indian indices
         indices_to_fetch = [
-            ("NSEI", "NIFTY 50"),  # NIFTY 50 on NSE
-            ("BSESN", "BSE SENSEX"),  # SENSEX on BSE
-            ("NSEBANK", "NIFTY Bank"),  # NIFTY Bank
+            ("^NSEI", "NIFTY 50"),      # NIFTY 50 on NSE
+            ("^BSESN", "BSE SENSEX"),  # SENSEX on BSE
+            ("^NSEBANK", "NIFTY Bank"), # NIFTY Bank
         ]
         
         for symbol, name in indices_to_fetch:
-            logger.info(f"[TwelveData] Fetching {name} ({symbol})")
-            data = self._make_request("quote", {"symbol": symbol, "interval": "1day"})
-            
-            if data and "close" in data:
-                try:
-                    prev_close = float(data.get("previous_close", 0) or 0)
-                    current = float(data.get("close", 0) or 0)
-                    change = current - prev_close if prev_close else 0
+            logger.info(f"[MarketData] Fetching {name} ({symbol}) via Yahoo Finance")
+            try:
+                ticker = yf.Ticker(symbol)
+                hist = ticker.history(period="2d")
+                
+                if len(hist) >= 2:
+                    current = float(hist['Close'].iloc[-1])
+                    prev_close = float(hist['Close'].iloc[-2])
+                    change = current - prev_close
                     change_pct = (change / prev_close * 100) if prev_close else 0
                     
                     indices_data.append({
-                        "symbol": symbol,
+                        "symbol": symbol.replace("^", ""),
                         "name": name,
                         "price": round(current, 2),
                         "change": round(change, 2),
                         "change_percent": round(change_pct, 2)
                     })
-                    logger.info(f"[TwelveData] {name}: {current:,.2f} ({change_pct:+.2f}%)")
-                except (ValueError, TypeError) as e:
-                    logger.error(f"[TwelveData] Error parsing {name}: {e}")
-                    raise RuntimeError(f"Error parsing {name} data: {e}")
-            else:
-                logger.error(f"[TwelveData] No data returned for {name}")
-                raise RuntimeError(f"No data returned from Twelve Data API for {name}")
+                    logger.info(f"[MarketData] {name}: {current:,.2f} ({change_pct:+.2f}%)")
+                else:
+                    logger.error(f"[MarketData] Insufficient data for {name}")
+                    raise RuntimeError(f"Insufficient historical data for {name}")
+            except Exception as e:
+                logger.error(f"[MarketData] Error fetching {name}: {e}")
+                raise RuntimeError(f"Failed to fetch {name}: {e}")
         
         return indices_data
     
