@@ -25,9 +25,13 @@ class IndianStockNewsTool:
         "moneycontrol": "https://www.moneycontrol.com/rss/latestnews.xml",
         "economictimes": "https://economictimes.indiatimes.com/rssfeedstopstories.cms",
         "mint": "https://www.livemint.com/rss/news",
-        "ndtvprofit": "https://www.ndtvprofit.com/rss/news",
-        "zeebiz": "https://www.zeebiz.com/rss/news.xml"
     }
+
+    # Fallback feeds if main ones fail
+    FALLBACK_FEEDS = [
+        ("feeds.reuters.com/reuters/businessNews", "https://feeds.reuters.com/reuters/businessNews"),
+        ("feeds.reuters.com/technologyNews", "https://feeds.reuters.com/technologyNews"),
+    ]
 
     # Keywords to filter for Indian stock market relevance
     INDIAN_MARKET_KEYWORDS = [
@@ -53,9 +57,10 @@ class IndianStockNewsTool:
 
     @staticmethod
     def _is_indian_market_relevant(title: str, description: str = "") -> bool:
-        """Check if news is relevant to Indian stock market."""
-        text = (title + " " + description).lower()
-        return any(keyword.lower() in text for keyword in IndianStockNewsTool.INDIAN_MARKET_KEYWORDS)
+        """Check if news is relevant to Indian stock market - simplified for debugging."""
+        # Temporarily return True to see if RSS works without filtering
+        # This helps debug if the issue is filtering or network
+        return True
     @staticmethod
     def _parse_rss_feed(feed_url: str, source_name: str, max_items: int = 10) -> list[dict]:
         """Parse an RSS feed and return news items filtered for Indian market relevance."""
