@@ -1,39 +1,81 @@
 """NSE Corporate Actions - Fetches dividend announcements from NSE India API.
 
-Uses nsefin library to fetch official NSE corporate actions data.
+Uses direct HTTP requests to NSE official API - no external library dependencies.
 """
 
 import logging
-import asyncio
+import requests
+import pandas as pd
 from typing import List, Dict, Any, Optional
 from datetime import datetime, timedelta
 
 logger = logging.getLogger("market_analyst.tools.nse_dividend")
-
-# Try to import nsefin
-try:
-    from nsefin import NSE
-    NSEFIN_AVAILABLE = True
-    logger.info("[NSEDividendTool] nsefin library available")
-except ImportError as e:
-    NSEFIN_AVAILABLE = False
-    logger.error(f"[NSEDividendTool] nsefin library not available: {e}")
-except Exception as e:
-    NSEFIN_AVAILABLE = False
-    logger.error(f"[NSEDividendTool] Error importing nsefin: {e}", exc_info=True)
 
 
 class NSEDividendTool:
     """Tool for fetching Indian stock dividend data from NSE Corporate Actions."""
     
     def __init__(self):
-        self.nse = None
-        if NSEFIN_AVAILABLE:
-            try:
-                self.nse = NSE()
-                logger.info("[NSEDividendTool] Initialized NSE connection")
-            except Exception as e:
-                logger.error(f"[NSEDividendTool] Failed to initialize NSE: {e}")
+        self.base_url = "https://www.nseindia.com"
+        self.session = requests.Session()
+        # Set headers to mimic browser
+        self.session.headers.update({
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+            'Accept': 'application/json',
+            'Accept-Language': 'en-US,en;q=0.9',
+            'Accept-Encoding': 'gzip, deflate, br',
+            'Referer': 'https://www.nseindia.com/companies-listing/corporate-filings-actions'
+        })
+        self._cookies_set = False
+        logger.info("[NSEDividendTool] Initialized with direct NSE API")
+        
+    def _get_cookies(self):
+        """Get NSE session cookies."""
+        try:
+            response = self.session.get(self.base_url, timeout=10)
+            response.raise_for_status()
+            self._cookies_set = True
+            logger.info("[NSEDividendTool] Got NSE session cookies")
+        except Exception as e:
+            logger.error(f"[NSEDividendTool] Failed to get cookies: {e}")
+            self._cookies_set = False
+    
+    def _parse_amount(self, purpose: str) -> Optional[float]:
+        """Extract dividend amount from purpose string."""
+        import re
+        try:
+            match = re.search(r'Rs\.?\s*([\d.]+)', purpose, re.IGNORECASE)
+            if match:
+                return float(match.group(1))
+            return None
+        except:
+            return None
+    
+    def _extract_dividend_type(self, purpose: str) -> str:
+        """Extract dividend type from purpose string."""
+        purpose_lower = purpose.lower()
+        if 'interim' in purpose_lower:
+            return 'Interim'
+        elif 'final' in purpose_lower:
+            return 'Final'
+        elif 'special' in purpose_lower:
+            return 'Special'
+        return 'Regular'
+    
+    def _parse_date(self, date_str: str) -> str:
+        """Parse and format date string."""
+        if not date_str:
+            return ''
+        try:
+            for fmt in ['%d-%b-%Y', '%d-%m-%Y', '%Y-%m-%d', '%d/%m/%Y']:
+                try:
+                    parsed = datetime.strptime(date_str, fmt)
+                    return parsed.strftime('%Y-%m-%d')
+                except:
+                    continue
+            return date_str
+        except:
+            return date_str
         
     async def get_dividend_announcements(self, ticker: str = None) -> Dict[str, Any]:
         """Get dividend announcements from NSE Corporate Actions.
@@ -46,30 +88,53 @@ class NSEDividendTool:
         """
         logger.info(f"[NSEDividendTool] Fetching dividend announcements for {ticker or 'all stocks'}")
         
-        if not NSEFIN_AVAILABLE or self.nse is None:
-            logger.error("[NSEDividendTool] nsefin not available")
-            return self._get_sample_data(ticker)
-        
         try:
-            # Fetch corporate actions with dividend filter
-            logger.info("[NSEDividendTool] Calling NSE get_corporate_actions")
-            df = self.nse.get_corporate_actions(subject_filter="dividend")
+            # Get session cookies first
+            if not self._cookies_set:
+                self._get_cookies()
             
-            if df is None or df.empty:
-                logger.warning("[NSEDividendTool] No dividend data returned from NSE")
+            # NSE Corporate Actions API endpoint
+            url = f"{self.base_url}/api/corporate-actions"
+            
+            # Parameters for dividend filter - last 90 days
+            params = {
+                'index': 'equities',
+                'from_date': (datetime.now() - timedelta(days=90)).strftime('%d-%m-%Y'),
+                'to_date': datetime.now().strftime('%d-%m-%Y'),
+                'subject': 'dividend'
+            }
+            
+            logger.info(f"[NSEDividendTool] Calling NSE API: {url}")
+            response = self.session.get(url, params=params, timeout=15)
+            response.raise_for_status()
+            
+            # Parse response
+            data = response.json()
+            
+            if not data or 'data' not in data:
+                logger.warning("[NSEDividendTool] No data returned from NSE API")
                 return self._get_sample_data(ticker)
             
-            # Convert DataFrame to list of dicts
+            # Convert to list of dicts
+            actions = data.get('data', [])
+            if not actions:
+                logger.warning("[NSEDividendTool] Empty data from NSE API")
+                return self._get_sample_data(ticker)
+            
             dividends = []
-            for _, row in df.iterrows():
+            for item in actions:
+                symbol = item.get('symbol', item.get('security', ''))
+                if not symbol:
+                    continue
+                    
                 dividend = {
-                    'ticker': str(row.get('symbol', '')).replace('.NS', '').replace('.BO', '').strip(),
-                    'company_name': str(row.get('company', row.get('symbol', ''))),
-                    'dividend_amount': float(row.get('amount', 0)) if pd.notna(row.get('amount')) else None,
-                    'dividend_type': str(row.get('type', 'Regular')),
-                    'ex_dividend_date': str(row.get('ex_date', row.get('exDate', ''))),
-                    'record_date': str(row.get('record_date', row.get('recordDate', ''))),
-                    'announcement_date': str(row.get('announcement_date', row.get('announcementDate', ''))),
+                    'ticker': str(symbol).replace('.NS', '').replace('.BO', '').strip(),
+                    'company_name': item.get('companyName', item.get('company', symbol)),
+                    'dividend_amount': self._parse_amount(item.get('purpose', item.get('description', ''))),
+                    'dividend_type': self._extract_dividend_type(item.get('purpose', '')),
+                    'ex_dividend_date': self._parse_date(item.get('exDate', item.get('ex_date', ''))),
+                    'record_date': self._parse_date(item.get('recDate', item.get('record_date', ''))),
+                    'announcement_date': self._parse_date(item.get('anncDate', item.get('announcement_date', ''))),
                     'source': 'NSE Corporate Actions'
                 }
                 dividends.append(dividend)
@@ -85,7 +150,7 @@ class NSEDividendTool:
                         'ticker': clean_ticker,
                         'company_name': filtered[0]['company_name'],
                         'dividend_rate': filtered[0]['dividend_amount'],
-                        'dividend_yield': None,  # NSE doesn't provide yield
+                        'dividend_yield': None,
                         'current_price': None,
                         'ex_dividend_date': filtered[0]['ex_dividend_date'],
                         'record_date': filtered[0]['record_date'],
