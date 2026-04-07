@@ -135,19 +135,21 @@ class IndianStockNewsTool:
             return int(datetime.now().timestamp())
 
     @staticmethod
-    async def get_market_news(max_results: int = 10) -> dict[str, Any]:
+    async def get_market_news(max_results: int = 10, bypass_cache: bool = False) -> dict[str, Any]:
         """Fetch general Indian stock market news from RSS feeds with filtering."""
         cache_key = "indian_market_news"
         logger.info(f"[IndianStockNews] Fetching market news from RSS feeds with Indian market filter")
         
-        cached = await SQLiteMCPTool.get_cache("indian_news", cache_key)
-        if cached:
-            cached_time = cached.get("cached_at")
-            if cached_time:
-                cache_dt = datetime.fromisoformat(cached_time)
-                if cache_dt.date() == datetime.now().date():
-                    logger.info(f"[IndianStockNews] Returning cached news from today")
-                    return cached
+        # Check cache unless bypass is requested
+        if not bypass_cache:
+            cached = await SQLiteMCPTool.get_cache("indian_news", cache_key)
+            if cached:
+                cached_time = cached.get("cached_at")
+                if cached_time:
+                    cache_dt = datetime.fromisoformat(cached_time)
+                    if cache_dt.date() == datetime.now().date():
+                        logger.info(f"[IndianStockNews] Returning cached news from today")
+                        return cached
 
         try:
             # Fetch from all RSS feeds
