@@ -90,16 +90,25 @@ class NSEMarketTool:
             
             result = []
             for item in movers[:10]:
+                # Try multiple possible volume field names from nsetools
+                volume = (
+                    item.get("tradedQuantity") or 
+                    item.get("quantityTraded") or 
+                    item.get("totalTradedQuantity") or 
+                    item.get("volume") or 
+                    item.get("tradedVolume") or 
+                    0
+                )
                 result.append({
                     "symbol": item.get("symbol", ""),
                     "name": item.get("symbol", ""),  # nsetools doesn't provide name
                     "price": float(item.get("ltp", 0)),
                     "change": float(item.get("net_price", 0)),
                     "change_percent": float(item.get("perChange", 0)),
-                    "volume": int(item.get("tradedQuantity", 0))
+                    "volume": int(float(volume))
                 })
             
-            logger.info(f"[NSEMarketTool] Fetched {len(result)} {direction}")
+            logger.info(f"[NSEMarketTool] Fetched {len(result)} {direction}, sample volume: {result[0]['volume'] if result else 'N/A'}")
             return result
         except Exception as e:
             logger.error(f"[NSEMarketTool] Error fetching market movers: {e}")
