@@ -73,19 +73,24 @@ class IndianStockNewsTool:
             
             news_items = []
             for item in items:
-                title = item.findtext('title', '') or item.findtext('.//{http://www.w3.org/2005/Atom}title', '')
-                link = item.findtext('link', '') or item.findtext('.//{http://www.w3.org/2005/Atom}link', '')
-                description = item.findtext('description', '') or item.findtext('.//{http://www.w3.org/2005/Atom}summary', '')
-                pub_date = item.findtext('pubDate', '') or item.findtext('.//{http://www.w3.org/2005/Atom}published', '')
+                title_elem = item.find('title') or item.find('.//{http://www.w3.org/2005/Atom}title')
+                link_elem = item.find('link') or item.find('.//{http://www.w3.org/2005/Atom}link')
+                desc_elem = item.find('description') or item.find('.//{http://www.w3.org/2005/Atom}summary')
+                pub_date_elem = item.find('pubDate') or item.find('.//{http://www.w3.org/2005/Atom}published')
                 
-                title = (title or "").strip()
-                description_clean = description or ""
+                # Extract text including from CDATA sections using itertext()
+                title = ''.join(title_elem.itertext()) if title_elem is not None else ''
+                link = ''.join(link_elem.itertext()) if link_elem is not None else ''
+                description = ''.join(desc_elem.itertext()) if desc_elem is not None else ''
+                pub_date = ''.join(pub_date_elem.itertext()) if pub_date_elem is not None else ''
                 
-                # Clean up HTML from description
-                try:
-                    description_clean = ET.fromstring(f'<root>{description_clean}</root>').text or description_clean
-                except:
-                    pass
+                title = title.strip()
+                description_clean = description.strip()
+                
+                # Clean up HTML tags from description using regex
+                import re
+                description_clean = re.sub(r'<[^>]+>', '', description_clean)
+                description_clean = re.sub(r'\s+', ' ', description_clean).strip()
                 
                 # Filter for Indian market relevance
                 if not IndianStockNewsTool._is_indian_market_relevant(title, description_clean):
@@ -94,7 +99,7 @@ class IndianStockNewsTool:
                 news_items.append({
                     "headline": title,
                     "source": source_name,
-                    "url": (link or "").strip(),
+                    "url": link.strip(),
                     "datetime": IndianStockNewsTool._parse_date(pub_date) if pub_date else int(datetime.now().timestamp()),
                     "summary": (description_clean[:200] + "..." if len(description_clean) > 200 else description_clean) if description_clean else "",
                     "category": "general"
