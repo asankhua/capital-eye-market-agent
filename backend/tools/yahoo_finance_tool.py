@@ -236,8 +236,8 @@ class YahooFinanceTool:
         """
         Fetch ALL stock data in a single optimized call.
         
-        This method fetches price history, key ratios, financial statements, and news
-        using a single Ticker object to minimize API calls.
+        For Indian stocks (.NS suffix), tries nsetools first to avoid Yahoo Finance rate limits.
+        Falls back to Yahoo Finance for historical data and financial statements.
         
         Args:
             ticker: Stock symbol, e.g. "RELIANCE.NS"
@@ -255,8 +255,23 @@ class YahooFinanceTool:
             logger.info("Returning cached data for %s", ticker)
             return cached
         
+        # For Indian stocks, try nsetools first for real-time data
+        is_indian_stock = ticker.upper().endswith('.NS') or ticker.upper().endswith('.BO')
+        nse_data = None
+        
+        if is_indian_stock:
+            try:
+                from backend.tools.nse_market_tool import nse_market_tool, NSETOOLS_AVAILABLE
+                if NSETOOLS_AVAILABLE and nse_market_tool:
+                    logger.info("Trying nsetools for Indian stock %s", ticker)
+                    nse_data = nse_market_tool.get_stock_quote(ticker)
+                    logger.info("Successfully fetched real-time data from nsetools for %s", ticker)
+            except Exception as e:
+                logger.warning("nsetools failed for %s: %s", ticker, e)
+                nse_data = None
+        
+        # Try Yahoo Finance for full data (price history, financials)
         try:
-            # Fetch with retry logic
             raw_data = await _fetch_with_retry(ticker, period)
             
             if not raw_data:
@@ -315,6 +330,14 @@ class YahooFinanceTool:
                     logger.info("Using sample news data for %s", ticker)
                     formatted_news = sample_news
             
+            # Use nsetools real-time data if available (more accurate for current price)
+            current_price = info.get("currentPrice")
+            change_percent = None
+            if nse_data:
+                current_price = nse_data.get("price", current_price)
+                change_percent = nse_data.get("change_percent")
+                logger.info("Using nsetools current price for %s: %s", ticker, current_price)
+            
             # Compile all data
             result = {
                 "ticker": ticker,
@@ -333,7 +356,8 @@ class YahooFinanceTool:
                     "revenue": info.get("totalRevenue"),
                     "earnings_growth": info.get("earningsGrowth"),
                     "revenue_growth": info.get("revenueGrowth"),
-                    "current_price": info.get("currentPrice"),
+                    "current_price": current_price,
+                    "change_percent": change_percent,
                     "fifty_two_week_high": info.get("fiftyTwoWeekHigh"),
                     "fifty_two_week_low": info.get("fiftyTwoWeekLow"),
                 },
@@ -343,7 +367,13 @@ class YahooFinanceTool:
                     "cash_flow": _df_to_records(cashflow),
                 },
                 "news": formatted_news,
-                "raw_info": info,  # Full info dict for advanced use
+                "raw_info": info,
+                "data_sources": {
+                    "price_history": "yahoo_finance",
+                    "real_time_price": "nsetools" if nse_data else "yahoo_finance",
+                    "financials": "yahoo_finance",
+                    "news": "yahoo_finance"
+                }
             }
             
             logger.info(
@@ -360,6 +390,26 @@ class YahooFinanceTool:
             
         except Exception as e:
             logger.error("Error fetching all data for %s: %s", ticker, e)
+            # If we have nsetools data, return partial data
+            if nse_data:
+                logger.info("Returning partial data from nsetools for %s", ticker)
+                return {
+                    "ticker": ticker,
+                    "company_name": nse_data.get("name", ticker),
+                    "price_history": {"period": period, "data": [], "count": 0},
+                    "ratios": {
+                        "pe_ratio": None,
+                        "current_price": nse_data.get("price"),
+                        "change_percent": nse_data.get("change_percent"),
+                    },
+                    "financials": {"income_statement": [], "balance_sheet": [], "cash_flow": []},
+                    "news": get_sample_news(ticker) or [],
+                    "raw_info": nse_data,
+                    "data_sources": {"real_time_price": "nsetools"},
+                    "partial_data": True,
+                    "error": str(e),
+                }
+            
             # Return comprehensive mock data when API fails (HF deployment)
             mock_data = _get_mock_stock_data(ticker)
             if mock_data:

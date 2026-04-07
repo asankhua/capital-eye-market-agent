@@ -112,13 +112,55 @@ class NSEMarketTool:
         
         logger.info(f"[NSEMarketTool] Market state: {len(indices)} indices")
         
-        return {
-            "indices": indices,
-            "timestamp": datetime.now().isoformat()
-        }
-
-
-# Global instance
+    def get_stock_quote(self, symbol: str) -> Dict[str, Any]:
+        """Get real-time stock quote for a specific symbol from NSE."""
+        try:
+            # Remove .NS suffix if present
+            clean_symbol = symbol.upper().replace('.NS', '').replace('.BO', '')
+            logger.info(f"[NSEMarketTool] Fetching stock quote for {clean_symbol}")
+            
+            quote = self.nse.get_stock_quote(clean_symbol)
+            if quote:
+                result = {
+                    "symbol": clean_symbol,
+                    "name": quote.get("companyName", clean_symbol),
+                    "price": float(quote.get("lastPrice", 0)),
+                    "change": float(quote.get("change", 0)),
+                    "change_percent": float(quote.get("pChange", 0)),
+                    "day_high": float(quote.get("dayHigh", 0)),
+                    "day_low": float(quote.get("dayLow", 0)),
+                    "volume": int(quote.get("totalTradedVolume", 0)),
+                    "open": float(quote.get("open", 0)),
+                    "previous_close": float(quote.get("previousClose", 0))
+                }
+                logger.info(f"[NSEMarketTool] {clean_symbol}: {result['price']} ({result['change_percent']}%)")
+                return result
+            else:
+                raise RuntimeError(f"No data returned for {clean_symbol}")
+        except Exception as e:
+            logger.error(f"[NSEMarketTool] Error fetching stock quote for {symbol}: {e}")
+            raise RuntimeError(f"Failed to fetch stock quote for {symbol}: {e}")
+    
+    def get_all_stocks(self) -> List[Dict]:
+        """Get list of all stocks traded on NSE."""
+        try:
+            logger.info("[NSEMarketTool] Fetching all stocks list")
+            stocks = self.nse.get_stock_codes()
+            logger.info(f"[NSEMarketTool] Found {len(stocks)} stocks")
+            return stocks
+        except Exception as e:
+            logger.error(f"[NSEMarketTool] Error fetching stock list: {e}")
+            raise RuntimeError(f"Failed to fetch stock list: {e}")
+    
+    def is_valid_symbol(self, symbol: str) -> bool:
+        """Check if a symbol is valid/traded on NSE."""
+        try:
+            clean_symbol = symbol.upper().replace('.NS', '').replace('.BO', '')
+            stocks = self.nse.get_stock_codes()
+            return clean_symbol in stocks.values() or clean_symbol in stocks.keys()
+        except Exception as e:
+            logger.error(f"[NSEMarketTool] Error checking symbol validity: {e}")
+            return False
 nse_market_tool = None
 if NSETOOLS_AVAILABLE:
     try:
