@@ -89,54 +89,63 @@ class NSEMarketTool:
     
     def _fetch_index_from_nse_api(self, index_name: str) -> Optional[Dict]:
         """Fetch a specific index directly from NSE API using requests."""
-        # Map index names to NSE API symbols
-        index_mapping = {
-            "NIFTY 50": "NIFTY 50",
-            "NIFTY MIDCAP 150": "NIFTY MIDCAP 150",
-            "NIFTY SMALLCAP 250": "NIFTY SMALLCAP 250",
-            "NIFTY ALPHA 50": "NIFTY ALPHA 50",
-            "NIFTY MIDCAP150 MOMENTUM 50": "NIFTY MIDCAP150 MOMENTUM 50",
-            "NIFTY50 EQUAL WEIGHT": "NIFTY50 EQUAL WEIGHT",
-            "NIFTY NEXT 50": "NIFTY NEXT 50",
-            "NIFTY INDIA RAILWAYS PSU": "NIFTY INDIA RAILWAYS PSU",
-            "NIFTY BANK": "NIFTY BANK",
-            "NIFTY IT": "NIFTY IT",
-            "NIFTY AUTO": "NIFTY AUTO",
-            "NIFTY PHARMA": "NIFTY PHARMA",
-            "NIFTY FMCG": "NIFTY FMCG",
-            "NIFTY METAL": "NIFTY METAL",
-            "NIFTY REALTY": "NIFTY REALTY",
-            "NIFTY PSU BANK": "NIFTY PSU BANK",
-            "NIFTY COMMODITIES": "NIFTY COMMODITIES",
-            "INDIA VIX": "INDIA VIX"
+        # Map index names to NSE API symbols (URL encoded)
+        index_symbol_map = {
+            "NIFTY 50": "NIFTY%2050",
+            "NIFTY MIDCAP 150": "NIFTY%20MIDCAP%20150",
+            "NIFTY SMALLCAP 250": "NIFTY%20SMALLCAP%20250",
+            "NIFTY ALPHA 50": "NIFTY%20ALPHA%2050",
+            "NIFTY MIDCAP150 MOMENTUM 50": "NIFTY%20MIDCAP150%20MOMENTUM%2050",
+            "NIFTY50 EQUAL WEIGHT": "NIFTY50%20EQUAL%20WEIGHT",
+            "NIFTY NEXT 50": "NIFTY%20NEXT%2050",
+            "NIFTY INDIA RAILWAYS PSU": "NIFTY%20INDIA%20RAILWAYS%20PSU",
+            "NIFTY BANK": "NIFTY%20BANK",
+            "NIFTY IT": "NIFTY%20IT",
+            "NIFTY AUTO": "NIFTY%20AUTO",
+            "NIFTY PHARMA": "NIFTY%20PHARMA",
+            "NIFTY FMCG": "NIFTY%20FMCG",
+            "NIFTY METAL": "NIFTY%20METAL",
+            "NIFTY REALTY": "NIFTY%20REALTY",
+            "NIFTY PSU BANK": "NIFTY%20PSU%20BANK",
+            "NIFTY COMMODITIES": "NIFTY%20COMMODITIES",
+            "INDIA VIX": "INDIA%20VIX"
         }
+        
+        symbol = index_symbol_map.get(index_name, index_name.replace(" ", "%20"))
         
         headers = {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-            "Accept": "application/json",
-            "Referer": "https://www.nseindia.com/"
+            "Accept": "application/json, text/plain, */*",
+            "Accept-Language": "en-US,en;q=0.9",
+            "Referer": "https://www.nseindia.com/market-data/live-equity-market",
+            "Connection": "keep-alive"
         }
         
         try:
-            # First get cookies by visiting main page
             session = requests.Session()
-            session.get("https://www.nseindia.com", headers=headers, timeout=10)
+            # Get initial cookies
+            session.get("https://www.nseindia.com", headers=headers, timeout=15)
             
-            # Now fetch index data
-            url = f"https://www.nseindia.com/api/equity-stockIndices?index={index_name.replace(' ', '%20')}"
-            response = session.get(url, headers=headers, timeout=10)
+            # Fetch all indices data
+            url = "https://www.nseindia.com/api/allIndices"
+            response = session.get(url, headers=headers, timeout=15)
             
             if response.status_code == 200:
                 data = response.json()
-                if data and len(data) > 0:
-                    idx_data = data[0] if isinstance(data, list) else data
-                    return {
-                        "symbol": index_name.replace(" ", ""),
-                        "name": index_name,
-                        "price": float(idx_data.get("last", 0) or idx_data.get("close", 0)),
-                        "change": float(idx_data.get("change", 0) or idx_data.get("variation", 0)),
-                        "change_percent": float(idx_data.get("pChange", 0) or idx_data.get("percentChange", 0))
-                    }
+                # data is a dict with 'data' key containing list of indices
+                indices_list = data.get("data", []) if isinstance(data, dict) else data
+                
+                for idx in indices_list:
+                    if idx.get("indexName") == index_name or idx.get("index", "") == index_name:
+                        return {
+                            "symbol": index_name.replace(" ", ""),
+                            "name": index_name,
+                            "price": float(idx.get("last", 0) or idx.get("close", 0) or 0),
+                            "change": float(idx.get("change", 0) or idx.get("variation", 0) or 0),
+                            "change_percent": float(idx.get("percentChange", 0) or idx.get("pChange", 0) or 0)
+                        }
+            
+            logger.warning(f"[NSEMarketTool] Index {index_name} not found in allIndices response")
             return None
         except Exception as e:
             logger.warning(f"[NSEMarketTool] Direct API fetch failed for {index_name}: {e}")
