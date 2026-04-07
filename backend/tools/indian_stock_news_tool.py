@@ -157,16 +157,6 @@ class IndianStockNewsTool:
             feed_url = "https://news.google.com/rss/search?q=india+stock+market&hl=en-IN&gl=IN&ceid=IN:en"
             news = IndianStockNewsTool._parse_rss_feed(feed_url, "Google News", max_items=max_results)
             
-            # If no news found, return sample data
-            if len(news) == 0:
-                sample_news = IndianStockNewsTool._get_sample_news(max_results)
-                return {
-                    "news": sample_news,
-                    "count": len(sample_news),
-                    "source": "sample_data",
-                    "cached_at": datetime.now().isoformat()
-                }
-            
             result = {
                 "news": news,
                 "count": len(news),
@@ -179,12 +169,12 @@ class IndianStockNewsTool:
 
         except Exception as e:
             logger.error(f"[IndianStockNews] Error fetching news from Google RSS: {e}")
-            # Return sample data on error
-            sample_news = IndianStockNewsTool._get_sample_news(max_results)
+            # Return empty array on error - no sample data
             return {
-                "news": sample_news,
-                "count": len(sample_news),
-                "source": "sample_data",
+                "news": [],
+                "count": 0,
+                "source": "google_news_rss",
+                "error": str(e),
                 "cached_at": datetime.now().isoformat()
             }
 
