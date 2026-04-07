@@ -226,7 +226,8 @@ class FinnhubTool:
         data = self._make_request("calendar/earnings", params)
         
         if not data or "earningsCalendar" not in data:
-            return DUMMY_EARNINGS
+            logger.error(f"[Finnhub] Invalid earnings response: {data}")
+            raise RuntimeError("Invalid response from Finnhub API for earnings calendar")
         
         earnings = []
         for item in data.get("earningsCalendar", []):
