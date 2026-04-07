@@ -25,63 +25,85 @@ class NSEMarketTool:
         logger.info("[NSEMarketTool] Initialized nsetools for Indian market data")
     
     def get_indices(self) -> List[Dict]:
-        """Get major Indian market indices using nsetools."""
+        """Get major Indian market indices using nsetools - fetches all available indices."""
         indices_data = []
         
-        # Fetch NIFTY 50
-        try:
-            logger.info("[NSEMarketTool] Fetching NIFTY 50")
-            nifty = self.nse.get_index_quote("NIFTY 50")
-            if nifty:
-                indices_data.append({
-                    "symbol": "NIFTY50",
-                    "name": "NIFTY 50",
-                    "price": float(nifty.get("last", 0)),
-                    "change": float(nifty.get("variation", 0)),
-                    "change_percent": float(nifty.get("percentChange", 0))
-                })
-                logger.info(f"[NSEMarketTool] NIFTY 50: {nifty.get('last')} ({nifty.get('percentChange')}%)")
-        except Exception as e:
-            logger.error(f"[NSEMarketTool] Error fetching NIFTY 50: {e}")
-            raise RuntimeError(f"Failed to fetch NIFTY 50: {e}")
+        # Major Indian indices to fetch
+        major_indices = [
+            "NIFTY 50",
+            "NIFTY NEXT 50",
+            "NIFTY 100",
+            "NIFTY 200",
+            "NIFTY 500",
+            "NIFTY MIDCAP 50",
+            "NIFTY MIDCAP 100",
+            "NIFTY MIDCAP 150",
+            "NIFTY SMALLCAP 50",
+            "NIFTY SMALLCAP 100",
+            "NIFTY BANK",
+            "NIFTY IT",
+            "NIFTY AUTO",
+            "NIFTY PHARMA",
+            "NIFTY FMCG",
+            "NIFTY METAL",
+            "NIFTY REALTY",
+            "NIFTY MEDIA",
+            "NIFTY ENERGY",
+            "NIFTY INFRA",
+            "NIFTY PSU BANK",
+            "NIFTY PRIVATE BANK",
+            "NIFTY FIN SERVICE",
+            "NIFTY CONSUMPTION",
+            "NIFTY MNC",
+            "NIFTY PSE",
+            "NIFTY CPSE",
+            "NIFTY COMMODITIES",
+            "NIFTY SERV SECTOR",
+            "INDIA VIX",
+        ]
         
-        # Fetch NIFTY Bank
-        try:
-            logger.info("[NSEMarketTool] Fetching NIFTY Bank")
-            bank_nifty = self.nse.get_index_quote("NIFTY BANK")
-            if bank_nifty:
-                indices_data.append({
-                    "symbol": "NIFTYBANK",
-                    "name": "NIFTY Bank",
-                    "price": float(bank_nifty.get("last", 0)),
-                    "change": float(bank_nifty.get("variation", 0)),
-                    "change_percent": float(bank_nifty.get("percentChange", 0))
-                })
-                logger.info(f"[NSEMarketTool] NIFTY Bank: {bank_nifty.get('last')}")
-        except Exception as e:
-            logger.error(f"[NSEMarketTool] Error fetching NIFTY Bank: {e}")
-        
-        # Fetch all indices to find SENSEX
-        try:
-            logger.info("[NSEMarketTool] Fetching all indices for SENSEX")
-            all_indices = self.nse.get_all_index_quote()
-            for idx in all_indices:
-                if "SENSEX" in str(idx.get("index", "")):
+        # Fetch each major index
+        for index_name in major_indices:
+            try:
+                logger.info(f"[NSEMarketTool] Fetching {index_name}")
+                idx_data = self.nse.get_index_quote(index_name)
+                if idx_data:
                     indices_data.append({
-                        "symbol": "SENSEX",
-                        "name": "BSE SENSEX",
+                        "symbol": idx_data.get("indexSymbol", "").replace(" ", ""),
+                        "name": idx_data.get("index", index_name),
+                        "price": float(idx_data.get("last", 0)),
+                        "change": float(idx_data.get("variation", 0)),
+                        "change_percent": float(idx_data.get("percentChange", 0))
+                    })
+                    logger.info(f"[NSEMarketTool] {index_name}: {idx_data.get('last')} ({idx_data.get('percentChange')}%)")
+            except Exception as e:
+                logger.warning(f"[NSEMarketTool] Could not fetch {index_name}: {e}")
+                continue
+        
+        # Also fetch all available indices to catch any we missed (including SENSEX)
+        try:
+            logger.info("[NSEMarketTool] Fetching all available indices")
+            all_indices = self.nse.get_all_index_quote()
+            existing_symbols = {idx["symbol"] for idx in indices_data}
+            
+            for idx in all_indices:
+                idx_symbol = idx.get("indexSymbol", "").replace(" ", "")
+                if idx_symbol and idx_symbol not in existing_symbols:
+                    indices_data.append({
+                        "symbol": idx_symbol,
+                        "name": idx.get("index", ""),
                         "price": float(idx.get("last", 0)),
                         "change": float(idx.get("variation", 0)),
                         "change_percent": float(idx.get("percentChange", 0))
                     })
-                    logger.info(f"[NSEMarketTool] SENSEX: {idx.get('last')}")
-                    break
+                    logger.info(f"[NSEMarketTool] Additional index: {idx.get('index')} @ {idx.get('last')}")
         except Exception as e:
-            logger.error(f"[NSEMarketTool] Error fetching SENSEX: {e}")
+            logger.error(f"[NSEMarketTool] Error fetching all indices: {e}")
         
         if not indices_data:
             raise RuntimeError("No index data retrieved from NSE")
         
+        logger.info(f"[NSEMarketTool] Total indices fetched: {len(indices_data)}")
         return indices_data
     
     def get_market_movers(self, direction: str = "gainers") -> List[Dict]:
