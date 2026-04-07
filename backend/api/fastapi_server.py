@@ -777,6 +777,20 @@ async def twelve_data_indices():
         raise HTTPException(status_code=503, detail=f"Failed to fetch indices: {str(e)}")
 
 
+@app.get("/twelve_data/market_movers")
+async def twelve_data_market_movers(type: str = "gainers"):
+    """Get Indian market movers (gainers/losers) from nsetools."""
+    logger.info("GET /twelve_data/market_movers type=%s", type)
+    
+    try:
+        from backend.tools.twelve_data_tool import twelve_data_tool
+        movers = twelve_data_tool.get_market_movers(type)
+        return {"movers": movers, "type": type, "count": len(movers)}
+    except Exception as e:
+        logger.error("Error fetching Twelve Data market movers: %s", e, exc_info=True)
+        raise HTTPException(status_code=503, detail=f"Failed to fetch market movers: {str(e)}")
+
+
 @app.get("/indian_news/market")
 async def indian_market_news(max_results: int = 10):
     """Get Indian stock market news from Moneycontrol, Economic Times, etc."""

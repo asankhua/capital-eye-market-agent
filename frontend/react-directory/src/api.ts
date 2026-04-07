@@ -212,6 +212,12 @@ export const api = {
     return response.data;
   },
 
+  getTwelveDataMarketMovers: async (type: string = 'gainers'): Promise<{movers: any[], type: string, count: number}> => {
+    debugLogger.logApiRequest('/twelve_data/market_movers', { type });
+    const response = await apiClient.get('/twelve_data/market_movers', { params: { type } });
+    return response.data;
+  },
+
   // ── Indian Stock News API ──────────────────────────────────────────
   getIndianMarketNews: async (max_results: number = 10): Promise<{news: any[], count: number, source: string}> => {
     debugLogger.logApiRequest('/indian_news/market', { max_results });

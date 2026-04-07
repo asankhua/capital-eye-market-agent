@@ -27,7 +27,8 @@ export const MarketMovers: React.FC = () => {
   const loadMovers = async () => {
     setLoading(true);
     try {
-      const data = await api.getFinnhubMarketMovers(type);
+      // Use nsetools for Indian market movers instead of Finnhub
+      const data = await api.getTwelveDataMarketMovers(type);
       setMovers(data.movers || []);
     } catch (err) {
       setError('Failed to load market movers');
