@@ -161,6 +161,17 @@ class IndianStockNewsTool:
             # Sort by datetime (newest first)
             all_news.sort(key=lambda x: x["datetime"], reverse=True)
             
+            # If no news after filtering, return sample data
+            if len(all_news) == 0:
+                sample_news = IndianStockNewsTool._get_sample_news(max_results)
+                logger.info(f"[IndianStockNews] No RSS news after filtering, returning sample data")
+                return {
+                    "news": sample_news,
+                    "count": len(sample_news),
+                    "source": "sample_data",
+                    "cached_at": datetime.now().isoformat()
+                }
+            
             result = {
                 "news": all_news[:max_results],
                 "count": len(all_news[:max_results]),
