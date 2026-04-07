@@ -177,7 +177,8 @@ export const NewsInsights: React.FC = () => {
       {news.length === 0 && (
         <div style={{ textAlign: 'center', padding: '40px', color: '#6b7280' }}>
           <Newspaper size={48} style={{ margin: '0 auto 16px', opacity: 0.3 }} />
-          <p>No news available. Please check your API key configuration.</p>
+          <p>No news available at the moment. Please try again later.</p>
+          {error && <p style={{ fontSize: '12px', marginTop: '8px', color: '#ef4444' }}>{error}</p>}
         </div>
       )}
     </div>
