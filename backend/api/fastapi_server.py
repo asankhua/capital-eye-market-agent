@@ -512,6 +512,26 @@ async def get_all_dividends():
         }
 
 
+# NSE Corporate Actions Dividend endpoint - uses nsefin library
+@app.get("/nse/dividends")
+async def nse_dividends(ticker: str = None):
+    """Get dividend announcements from NSE Corporate Actions API."""
+    logger.info(f"GET /nse/dividends ticker={ticker}")
+    
+    try:
+        from backend.tools.nse_dividend_tool import nse_dividend_tool
+        result = await nse_dividend_tool.get_dividend_announcements(ticker)
+        return result
+    except Exception as e:
+        logger.error(f"Error fetching NSE dividends: {e}", exc_info=True)
+        return {
+            "ticker": ticker.upper().replace('.NS', '') if ticker else "ALL",
+            "error": str(e),
+            "announcements": [],
+            "source": "NSE API Error"
+        }
+
+
 # Historical Analysis endpoint
 @app.get("/historical/{ticker}", response_model=HistoricalAnalysisResponse)
 async def get_historical_analysis(ticker: str, limit: int = 30):
