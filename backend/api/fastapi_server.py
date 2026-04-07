@@ -715,6 +715,39 @@ async def debug_test_yahoo():
             "error_type": type(e).__name__
         }
 
+@app.get("/debug/nsetools")
+async def debug_nsetools():
+    """Debug endpoint to check nsetools availability and test data fetch."""
+    logger.info("GET /debug/nsetools")
+    
+    result = {
+        "nsetools_available": False,
+        "nsetools_initialized": False,
+        "test_fetch": None,
+        "error": None
+    }
+    
+    try:
+        from backend.tools.nse_market_tool import NSETOOLS_AVAILABLE, nse_market_tool
+        result["nsetools_available"] = NSETOOLS_AVAILABLE
+        result["nsetools_initialized"] = nse_market_tool is not None
+        
+        if nse_market_tool:
+            try:
+                # Test fetch NIFTY 50
+                nifty = nse_market_tool.nse.get_index_quote("NIFTY 50")
+                result["test_fetch"] = {
+                    "nifty_50_data": nifty,
+                    "success": nifty is not None
+                }
+            except Exception as e:
+                result["test_fetch"] = {"error": str(e)}
+    except Exception as e:
+        result["error"] = str(e)
+    
+    return result
+
+
 @app.get("/twelve_data/market_overview")
 async def twelve_data_market_overview():
     """Get market overview from Twelve Data (indices, gainers, losers)."""
