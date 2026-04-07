@@ -1,14 +1,13 @@
-"""Indian Stock News Tool - Fetches Indian stock market news using NewsData.io API.
+"""Indian Stock News Tool - Fetches Indian stock market news using Google News RSS.
 
 Provides:
-  - Indian stock news from NewsData.io API
+  - Indian stock news from Google News RSS feed
   - Market updates, IPO news, company announcements
-  - Requires NewsData.io API key (free tier available)
+  - No API key required
 """
 
 import asyncio
 import logging
-import os
 from datetime import datetime
 from typing import Any
 import requests
@@ -20,16 +19,10 @@ logger = logging.getLogger("market_analyst.tools.indian_stock_news")
 
 
 class IndianStockNewsTool:
-    """Tool for fetching Indian stock market news using NewsData.io API."""
+    """Tool for fetching Indian stock market news using Google News RSS."""
 
-    NEWSDATA_API_KEY = os.environ.get("NEWSDATA_API_KEY", "")
-    NEWSDATA_BASE_URL = "https://newsdata.io/api/1/market"
-    
-    # Default query for Indian market news
-    DEFAULT_QUERY = "india stock market OR sensex OR nifty OR RBI OR SEBI"
-    DEFAULT_COUNTRY = "in"  # India
-    DEFAULT_LANGUAGE = "en"
-    DEFAULT_CATEGORY = "business"
+    # Google News RSS feed for Indian stock market
+    GOOGLE_NEWS_RSS_URL = "https://news.google.com/rss/search?q=india+stock+market&hl=en-IN&gl=IN&ceid=IN:en"
 
     # Keywords to filter for Indian stock market relevance
     INDIAN_MARKET_KEYWORDS = [
@@ -154,8 +147,7 @@ class IndianStockNewsTool:
 
         try:
             # Fetch from Google News RSS
-            feed_url = "https://news.google.com/rss/search?q=india+stock+market&hl=en-IN&gl=IN&ceid=IN:en"
-            news = IndianStockNewsTool._parse_rss_feed(feed_url, "Google News", max_items=max_results)
+            news = IndianStockNewsTool._parse_rss_feed(IndianStockNewsTool.GOOGLE_NEWS_RSS_URL, "Google News", max_items=max_results)
             
             result = {
                 "news": news,
