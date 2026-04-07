@@ -1,5 +1,6 @@
 """Market data integration using nsetools for Indian markets and Finnhub for US markets."""
 import os
+import requests
 from typing import List, Dict, Any, Optional
 from datetime import datetime
 
@@ -68,11 +69,78 @@ class NSEMarketTool:
                 logger.warning(f"[NSEMarketTool] Could not fetch {index_name}: {e}")
                 continue
         
+        # Try to fetch missing indices via direct NSE API
+        missing_indices = ["NIFTY SMALLCAP 250", "NIFTY MIDCAP150 MOMENTUM 50", "NIFTY50 EQUAL WEIGHT", "NIFTY INDIA RAILWAYS PSU"]
+        for idx_name in missing_indices:
+            if idx_name not in [d.get("name", "") for d in indices_data]:
+                try:
+                    data = self._fetch_index_from_nse_api(idx_name)
+                    if data:
+                        indices_data.append(data)
+                        logger.info(f"[NSEMarketTool] {idx_name} fetched via direct API: {data['price']} ({data['change_percent']}%)")
+                except Exception as e:
+                    logger.warning(f"[NSEMarketTool] Could not fetch {idx_name} via direct API: {e}")
+        
         if not indices_data:
             raise RuntimeError("No index data retrieved from NSE")
         
         logger.info(f"[NSEMarketTool] Total indices fetched: {len(indices_data)}")
         return indices_data
+    
+    def _fetch_index_from_nse_api(self, index_name: str) -> Optional[Dict]:
+        """Fetch a specific index directly from NSE API using requests."""
+        # Map index names to NSE API symbols
+        index_mapping = {
+            "NIFTY 50": "NIFTY 50",
+            "NIFTY MIDCAP 150": "NIFTY MIDCAP 150",
+            "NIFTY SMALLCAP 250": "NIFTY SMALLCAP 250",
+            "NIFTY ALPHA 50": "NIFTY ALPHA 50",
+            "NIFTY MIDCAP150 MOMENTUM 50": "NIFTY MIDCAP150 MOMENTUM 50",
+            "NIFTY50 EQUAL WEIGHT": "NIFTY50 EQUAL WEIGHT",
+            "NIFTY NEXT 50": "NIFTY NEXT 50",
+            "NIFTY INDIA RAILWAYS PSU": "NIFTY INDIA RAILWAYS PSU",
+            "NIFTY BANK": "NIFTY BANK",
+            "NIFTY IT": "NIFTY IT",
+            "NIFTY AUTO": "NIFTY AUTO",
+            "NIFTY PHARMA": "NIFTY PHARMA",
+            "NIFTY FMCG": "NIFTY FMCG",
+            "NIFTY METAL": "NIFTY METAL",
+            "NIFTY REALTY": "NIFTY REALTY",
+            "NIFTY PSU BANK": "NIFTY PSU BANK",
+            "NIFTY COMMODITIES": "NIFTY COMMODITIES",
+            "INDIA VIX": "INDIA VIX"
+        }
+        
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            "Accept": "application/json",
+            "Referer": "https://www.nseindia.com/"
+        }
+        
+        try:
+            # First get cookies by visiting main page
+            session = requests.Session()
+            session.get("https://www.nseindia.com", headers=headers, timeout=10)
+            
+            # Now fetch index data
+            url = f"https://www.nseindia.com/api/equity-stockIndices?index={index_name.replace(' ', '%20')}"
+            response = session.get(url, headers=headers, timeout=10)
+            
+            if response.status_code == 200:
+                data = response.json()
+                if data and len(data) > 0:
+                    idx_data = data[0] if isinstance(data, list) else data
+                    return {
+                        "symbol": index_name.replace(" ", ""),
+                        "name": index_name,
+                        "price": float(idx_data.get("last", 0) or idx_data.get("close", 0)),
+                        "change": float(idx_data.get("change", 0) or idx_data.get("variation", 0)),
+                        "change_percent": float(idx_data.get("pChange", 0) or idx_data.get("percentChange", 0))
+                    }
+            return None
+        except Exception as e:
+            logger.warning(f"[NSEMarketTool] Direct API fetch failed for {index_name}: {e}")
+            return None
     
     def get_market_movers(self, direction: str = "gainers") -> List[Dict]:
         """Get market movers from NSE."""
