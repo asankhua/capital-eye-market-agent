@@ -15,11 +15,9 @@ WORKDIR /app
 
 # Copy requirements first for better caching
 COPY requirements.txt .
-COPY requirements-hf.txt .
 
 # Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
-RUN pip install --no-cache-dir -r requirements-hf.txt
 
 # --- Frontend Stage ---
 FROM node:20-slim as frontend-builder
