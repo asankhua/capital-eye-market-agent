@@ -4,8 +4,9 @@ import requests
 from typing import List, Dict, Any, Optional
 from datetime import datetime, timedelta
 
-# Get API key from environment
-FINNHUB_API_KEY = os.getenv("FINNHUB_API_KEY", "")
+# Import the logger from config
+from backend.config import logger
+
 FINNHUB_BASE_URL = "https://finnhub.io/api/v1"
 
 # Fallback dummy data (used when API fails or no key)
@@ -179,17 +180,70 @@ DUMMY_COMPANY_NEWS = {
 }
 
 class FinnhubTool:
-    """Tool for fetching market data from Finnhub API - Using DUMMY DATA."""
+    """Tool for fetching market data from Finnhub API."""
     
     def __init__(self):
-        print("[Finnhub] Initialized with DUMMY DATA mode")
+        # Read API key at runtime, not import time (for HF Secrets compatibility)
+        self.api_key = os.getenv("FINNHUB_API_KEY", "")
+        self.api_key_source = "HF Secrets" if self.api_key else "NOT SET"
+        
+        if self.api_key:
+            masked_key = self.api_key[:8] + "..." + self.api_key[-4:] if len(self.api_key) > 12 else "***"
+            logger.info(f"[Finnhub] Initialized with API key from {self.api_key_source}: {masked_key}")
+        else:
+            logger.warning("[Finnhub] NO API KEY FOUND - will use dummy data. Check HF Secrets for FINNHUB_API_KEY")
+    
+    def _make_request(self, endpoint: str, params: dict = None) -> dict:
+        if not self.api_key:
+            return {}
+        
+        url = f"{FINNHUB_BASE_URL}/{endpoint}"
+        params = params or {}
+        params["token"] = self.api_key
+        
+        response = requests.get(url, params=params)
+        if response.status_code == 200:
+            return response.json()
+        else:
+            logger.error(f"[Finnhub] API request failed: {response.status_code}")
+            return {}
     
     def get_earnings_calendar(self, symbol: Optional[str] = None, from_date: str = None, to_date: str = None) -> List[Dict]:
         """Get earnings calendar - Returns DUMMY DATA."""
-        print(f"[Finnhub] Returning dummy earnings data for {symbol if symbol else 'all symbols'}")
+        if not self.api_key:
+            print(f"[Finnhub] Returning dummy earnings data for {symbol if symbol else 'all symbols'}")
+            if symbol:
+                return [e for e in DUMMY_EARNINGS if e["symbol"] == symbol.upper()]
+            return DUMMY_EARNINGS
+        
+        if not from_date:
+            from_date = datetime.now().strftime("%Y-%m-%d")
+        if not to_date:
+            to_date = (datetime.now() + timedelta(days=30)).strftime("%Y-%m-%d")
+        
+        params = {"from": from_date, "to": to_date}
         if symbol:
-            return [e for e in DUMMY_EARNINGS if e["symbol"] == symbol.upper()]
-        return DUMMY_EARNINGS
+            params["symbol"] = symbol
+        
+        data = self._make_request("calendar/earnings", params)
+        
+        if not data or "earningsCalendar" not in data:
+            print(f"[Finnhub] API returned no data, using dummy")
+            if symbol:
+                return [e for e in DUMMY_EARNINGS if e["symbol"] == symbol.upper()]
+            return DUMMY_EARNINGS
+        
+        earnings = []
+        for item in data.get("earningsCalendar", []):
+            earnings.append({
+                "symbol": item.get("symbol", ""),
+                "date": item.get("date", ""),
+                "epsEstimate": item.get("epsEstimate"),
+                "revenueEstimate": item.get("revenueEstimate"),
+                "fiscalPeriod": item.get("period", "")
+            })
+        
+        return earnings if earnings else DUMMY_EARNINGS
     
     def get_market_news(self, category: str = "general", symbol: Optional[str] = None) -> List[Dict]:
         """Get market news - Returns DUMMY DATA."""

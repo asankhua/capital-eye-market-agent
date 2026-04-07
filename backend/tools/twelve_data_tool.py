@@ -4,8 +4,9 @@ import requests
 from typing import List, Dict, Any, Optional
 from datetime import datetime
 
-# Get API key from environment
-TWELVE_DATA_API_KEY = os.getenv("TWELVE_DATA_API_KEY", "")
+# Import the logger from config
+from backend.config import logger
+
 TWELVE_DATA_BASE_URL = "https://api.twelvedata.com"
 
 # DUMMY DATA FOR UI TESTING (fallback when API fails)
@@ -38,11 +39,15 @@ class TwelveDataTool:
     """Tool for fetching market data from Twelve Data API."""
     
     def __init__(self):
-        self.api_key = TWELVE_DATA_API_KEY
+        # Read API key at runtime, not import time (for HF Secrets compatibility)
+        self.api_key = os.getenv("TWELVE_DATA_API_KEY", "")
+        self.api_key_source = "HF Secrets" if self.api_key else "NOT SET"
+        
         if self.api_key:
-            print(f"[TwelveData] Initialized with API key: {self.api_key[:8]}...")
+            masked_key = self.api_key[:8] + "..." + self.api_key[-4:] if len(self.api_key) > 12 else "***"
+            logger.info(f"[TwelveData] Initialized with API key from {self.api_key_source}: {masked_key}")
         else:
-            print("[TwelveData] No API key found - using dummy data")
+            logger.warning("[TwelveData] NO API KEY FOUND - will use dummy data. Check HF Secrets for TWELVE_DATA_API_KEY")
     
     def _make_request(self, endpoint: str, params: dict = None) -> dict:
         """Make authenticated request to Twelve Data API."""
@@ -54,21 +59,21 @@ class TwelveDataTool:
         params['apikey'] = self.api_key
         
         try:
-            response = requests.get(url, params=params, timeout=10)
+            response = requests.get(url, params=params, timeout=15)
             response.raise_for_status()
             data = response.json()
             if data.get("status") == "error":
-                print(f"[TwelveData] API error: {data.get('message', 'Unknown error')}")
+                logger.error(f"[TwelveData] API error: {data.get('message', 'Unknown error')}")
                 return {}
             return data
         except Exception as e:
-            print(f"[TwelveData] API request failed: {e}")
+            logger.error(f"[TwelveData] API request failed: {e}")
             return {}
     
     def get_market_movers(self, direction: str = "gainers", outputsize: int = 10) -> List[Dict]:
         """Get market movers: gainers or losers."""
         if not self.api_key:
-            print("[TwelveData] Using dummy market movers")
+            logger.warning("[TwelveData] Using dummy market movers - no API key")
             return DUMMY_MOVERS.get(direction, DUMMY_MOVERS["gainers"])[:outputsize]
         
         # Use Finnhub for movers (Twelve Data doesn't have direct movers endpoint)
@@ -78,13 +83,14 @@ class TwelveDataTool:
     def get_indices(self) -> List[Dict]:
         """Get major market indices data."""
         if not self.api_key:
-            print("[TwelveData] Using dummy indices data")
+            logger.warning("[TwelveData] Using dummy indices - no API key")
             return DUMMY_INDICES
         
         # Try to fetch real indices - NIFTY 50 and SENSEX
         indices_data = []
         
         for symbol, name in [("NIFTY 50", "NIFTY 50"), ("BSE SENSEX", "BSE SENSEX")]:
+            logger.info(f"[TwelveData] Fetching quote for {symbol}")
             data = self._make_request("quote", {"symbol": symbol, "interval": "1day"})
             if data and "close" in data:
                 try:
@@ -100,15 +106,21 @@ class TwelveDataTool:
                         "change": round(change, 2),
                         "change_percent": round(change_pct, 2)
                     })
-                except (ValueError, TypeError):
-                    pass
+                    logger.info(f"[TwelveData] Got {symbol}: {current} ({change_pct:+.2f}%)")
+                except (ValueError, TypeError) as e:
+                    logger.warning(f"[TwelveData] Error parsing {symbol} data: {e}")
+            else:
+                logger.warning(f"[TwelveData] No data returned for {symbol}: {data}")
+        
+        if not indices_data:
+            logger.warning("[TwelveData] No indices fetched, using dummy data")
         
         return indices_data if indices_data else DUMMY_INDICES
     
     def get_market_state(self) -> Dict[str, Any]:
         """Get overall market state/overview."""
         if not self.api_key:
-            print("[TwelveData] Using dummy market state")
+            logger.warning("[TwelveData] Using dummy market state - no API key")
             return {
                 "indices": DUMMY_INDICES,
                 "top_gainers": DUMMY_MOVERS["gainers"],
@@ -116,9 +128,12 @@ class TwelveDataTool:
                 "timestamp": datetime.now().isoformat()
             }
         
+        logger.info("[TwelveData] Fetching market state...")
         indices = self.get_indices()
         gainers = self.get_market_movers("gainers", 5)
         losers = self.get_market_movers("losers", 5)
+        
+        logger.info(f"[TwelveData] Market state: {len(indices)} indices, {len(gainers)} gainers, {len(losers)} losers")
         
         return {
             "indices": indices,
