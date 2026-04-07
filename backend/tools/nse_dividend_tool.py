@@ -15,9 +15,12 @@ try:
     from nsefin import NSE
     NSEFIN_AVAILABLE = True
     logger.info("[NSEDividendTool] nsefin library available")
-except ImportError:
+except ImportError as e:
     NSEFIN_AVAILABLE = False
-    logger.warning("[NSEDividendTool] nsefin library not available")
+    logger.error(f"[NSEDividendTool] nsefin library not available: {e}")
+except Exception as e:
+    NSEFIN_AVAILABLE = False
+    logger.error(f"[NSEDividendTool] Error importing nsefin: {e}", exc_info=True)
 
 
 class NSEDividendTool:
