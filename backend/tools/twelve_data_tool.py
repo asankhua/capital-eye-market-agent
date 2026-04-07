@@ -59,9 +59,23 @@ class TwelveDataTool:
         params['apikey'] = self.api_key
         
         try:
+            logger.info(f"[TwelveData] Requesting: {url} with params: {params}")
             response = requests.get(url, params=params, timeout=15)
+            logger.info(f"[TwelveData] Response status: {response.status_code}")
+            logger.info(f"[TwelveData] Response text: {response.text[:200]}")
+            
             response.raise_for_status()
-            data = response.json()
+            
+            if not response.text:
+                logger.error("[TwelveData] Empty response")
+                return {}
+            
+            try:
+                data = response.json()
+            except Exception as e:
+                logger.error(f"[TwelveData] JSON parse error: {e}, text: {response.text[:500]}")
+                return {}
+            
             if data.get("status") == "error":
                 logger.error(f"[TwelveData] API error: {data.get('message', 'Unknown error')}")
                 return {}
