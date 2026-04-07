@@ -142,17 +142,6 @@ export const NewsInsights: React.FC = () => {
               </a>
             </h3>
             
-            <p style={{ 
-              fontSize: '14px', 
-              color: '#4b5563', 
-              lineHeight: 1.5,
-              wordBreak: 'break-word',
-              overflowWrap: 'break-word',
-              maxWidth: '100%'
-            }}>
-              {item.summary}
-            </p>
-            
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 'auto', paddingTop: '8px' }}>
               <span style={{ fontSize: '12px', color: '#6b7280', fontWeight: 600, wordBreak: 'break-word' }}>
                 Source: {item.source}
