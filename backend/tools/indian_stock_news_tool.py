@@ -33,13 +33,15 @@ class IndianStockNewsTool:
     async def get_market_news(max_results: int = 10) -> dict[str, Any]:
         """Fetch general Indian stock market news."""
         cache_key = "indian_market_news"
+        logger.info(f"[IndianStockNews] Fetching market news, max_results={max_results}")
+        
         cached = await SQLiteMCPTool.get_cache("indian_news", cache_key)
         if cached:
-            # Check if cache is from today
             cached_time = cached.get("cached_at")
             if cached_time:
                 cache_dt = datetime.fromisoformat(cached_time)
                 if cache_dt.date() == datetime.now().date():
+                    logger.info(f"[IndianStockNews] Returning cached news from today")
                     return cached
 
         queries = [
@@ -50,16 +52,20 @@ class IndianStockNewsTool:
 
         news_items = []
         try:
+            logger.info(f"[IndianStockNews] Starting DuckDuckGo search")
             with DDGS() as ddgs:
-                for query in queries[:2]:  # Limit to avoid rate limits
+                for query in queries[:2]:
+                    logger.info(f"[IndianStockNews] Searching: {query}")
                     results = ddgs.news(
                         query,
                         region="in",
                         safesearch="off",
-                        timelimit="d",  # Last 24 hours
+                        timelimit="d",
                         max_results=max_results // 2
                     )
+                    result_count = 0
                     for r in results:
+                        result_count += 1
                         news_items.append({
                             "headline": r.get("title", ""),
                             "source": IndianStockNewsTool._extract_source(r.get("source", "")),
@@ -68,9 +74,9 @@ class IndianStockNewsTool:
                             "summary": r.get("body", "")[:200] + "..." if len(r.get("body", "")) > 200 else r.get("body", ""),
                             "category": "general"
                         })
-
                         if len(news_items) >= max_results:
                             break
+                    logger.info(f"[IndianStockNews] Query '{query}' returned {result_count} results")
 
                     if len(news_items) >= max_results:
                         break
@@ -81,12 +87,13 @@ class IndianStockNewsTool:
                 "source": "indian_stock_news",
                 "cached_at": datetime.now().isoformat()
             }
+            logger.info(f"[IndianStockNews] Total news items: {len(news_items)}")
 
-            # Cache for 1 hour
             await SQLiteMCPTool.set_cache("indian_news", cache_key, result, ttl=3600)
             return result
 
         except Exception as e:
+            logger.error(f"[IndianStockNews] Error fetching news: {e}", exc_info=True)
             return {
                 "news": [],
                 "count": 0,
