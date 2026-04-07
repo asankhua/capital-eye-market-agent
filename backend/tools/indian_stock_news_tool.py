@@ -174,6 +174,14 @@ class IndianStockNewsTool:
 
         except Exception as e:
             logger.error(f"[IndianStockNews] Error fetching news from RSS: {e}", exc_info=True)
+            # Try to return old cached data if fresh fetch fails
+            try:
+                cached = await SQLiteMCPTool.get_cache("indian_news", cache_key)
+                if cached and cached.get("news"):
+                    logger.info(f"[IndianStockNews] Returning old cache due to fetch error")
+                    return cached
+            except:
+                pass
             return {
                 "news": [],
                 "count": 0,
