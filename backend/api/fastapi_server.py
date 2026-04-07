@@ -833,3 +833,45 @@ async def twelve_data_indices():
     except Exception as e:
         logger.error("Error fetching Twelve Data indices: %s", e, exc_info=True)
         raise HTTPException(status_code=503, detail=f"Failed to fetch indices: {str(e)}")
+
+
+@app.get("/indian_news/market")
+async def indian_market_news(max_results: int = 10):
+    """Get Indian stock market news from Moneycontrol, Economic Times, etc."""
+    logger.info("GET /indian_news/market")
+    
+    try:
+        from backend.tools.indian_stock_news_tool import indian_stock_news_tool
+        news = await indian_stock_news_tool.get_market_news(max_results=max_results)
+        return news
+    except Exception as e:
+        logger.error("Error fetching Indian market news: %s", e, exc_info=True)
+        raise HTTPException(status_code=503, detail=f"Failed to fetch news: {str(e)}")
+
+
+@app.get("/indian_news/company/{symbol}")
+async def indian_company_news(symbol: str, max_results: int = 5):
+    """Get Indian company-specific news."""
+    logger.info(f"GET /indian_news/company/{symbol}")
+    
+    try:
+        from backend.tools.indian_stock_news_tool import indian_stock_news_tool
+        news = await indian_stock_news_tool.get_company_news(symbol, max_results=max_results)
+        return news
+    except Exception as e:
+        logger.error(f"Error fetching Indian company news for {symbol}: %s", e, exc_info=True)
+        raise HTTPException(status_code=503, detail=f"Failed to fetch news: {str(e)}")
+
+
+@app.get("/indian_news/category/{category}")
+async def indian_category_news(category: str, max_results: int = 10):
+    """Get Indian stock news by category: ipo, merger, earnings, forex, crypto, general."""
+    logger.info(f"GET /indian_news/category/{category}")
+    
+    try:
+        from backend.tools.indian_stock_news_tool import indian_stock_news_tool
+        news = await indian_stock_news_tool.get_category_news(category, max_results=max_results)
+        return news
+    except Exception as e:
+        logger.error(f"Error fetching Indian category news for {category}: %s", e, exc_info=True)
+        raise HTTPException(status_code=503, detail=f"Failed to fetch news: {str(e)}")

@@ -211,4 +211,23 @@ export const api = {
     const response = await apiClient.get('/twelve_data/indices');
     return response.data;
   },
+
+  // ── Indian Stock News API ──────────────────────────────────────────
+  getIndianMarketNews: async (max_results: number = 10): Promise<{news: any[], count: number, source: string}> => {
+    debugLogger.logApiRequest('/indian_news/market', { max_results });
+    const response = await apiClient.get('/indian_news/market', { params: { max_results } });
+    return response.data;
+  },
+
+  getIndianCompanyNews: async (symbol: string, max_results: number = 5): Promise<{symbol: string, news: any[], count: number, source: string}> => {
+    debugLogger.logApiRequest(`/indian_news/company/${symbol}`, { max_results });
+    const response = await apiClient.get(`/indian_news/company/${symbol}`, { params: { max_results } });
+    return response.data;
+  },
+
+  getIndianCategoryNews: async (category: string, max_results: number = 10): Promise<{news: any[], count: number, category: string, source: string}> => {
+    debugLogger.logApiRequest(`/indian_news/category/${category}`, { max_results });
+    const response = await apiClient.get(`/indian_news/category/${category}`, { params: { max_results } });
+    return response.data;
+  },
 };

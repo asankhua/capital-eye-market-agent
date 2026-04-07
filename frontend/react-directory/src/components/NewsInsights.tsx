@@ -25,8 +25,14 @@ export const NewsInsights: React.FC = () => {
   const loadNews = async () => {
     setLoading(true);
     try {
-      const data = await api.getFinnhubNews(category);
-      setNews(data.news || []);
+      // Load Indian market news based on selected category
+      let categoryData;
+      if (category === 'general') {
+        categoryData = await api.getIndianMarketNews(10);
+      } else {
+        categoryData = await api.getIndianCategoryNews(category, 10);
+      }
+      setNews(categoryData.news || []);
     } catch (err) {
       setError('Failed to load news');
       console.error(err);
