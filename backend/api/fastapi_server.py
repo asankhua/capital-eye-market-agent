@@ -703,6 +703,31 @@ async def debug_env():
         "environment": dict(os.environ) if os.getenv("DEBUG_FULL_ENV") else "Set DEBUG_FULL_ENV to see all"
     }
 
+@app.get("/debug/test_yahoo")
+async def debug_test_yahoo():
+    """Test Yahoo Finance directly to see if it's working."""
+    try:
+        import yfinance as yf
+        
+        # Test NIFTY 50
+        nifty = yf.Ticker("^NSEI")
+        nifty_info = nifty.info
+        nifty_hist = nifty.history(period="2d")
+        
+        return {
+            "yfinance_available": True,
+            "nifty_info_keys": list(nifty_info.keys())[:10] if nifty_info else [],
+            "nifty_history_length": len(nifty_hist),
+            "nifty_last_close": float(nifty_hist['Close'].iloc[-1]) if len(nifty_hist) > 0 else None,
+            "nifty_prev_close": float(nifty_hist['Close'].iloc[-2]) if len(nifty_hist) > 1 else None,
+        }
+    except Exception as e:
+        return {
+            "yfinance_available": False,
+            "error": str(e),
+            "error_type": type(e).__name__
+        }
+
 @app.get("/twelve_data/market_overview")
 async def twelve_data_market_overview():
     """Get market overview from Twelve Data (indices, gainers, losers)."""
