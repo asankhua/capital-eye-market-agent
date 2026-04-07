@@ -1,4 +1,4 @@
-"""Twelve Data API integration for market overview."""
+"""Market data integration using Yahoo Finance for real-time Indian indices."""
 import os
 import requests
 from typing import List, Dict, Any, Optional
@@ -6,6 +6,14 @@ from datetime import datetime
 
 # Import the logger from config
 from backend.config import logger
+
+# Try to import yfinance for real-time data
+try:
+    import yfinance as yf
+    YFINANCE_AVAILABLE = True
+except ImportError:
+    YFINANCE_AVAILABLE = False
+    logger.warning("[MarketData] yfinance not available")
 
 TWELVE_DATA_BASE_URL = "https://api.twelvedata.com"
 
@@ -81,41 +89,120 @@ class TwelveDataTool:
         return finnhub_tool.get_market_movers(direction)[:outputsize]
     
     def get_indices(self) -> List[Dict]:
-        """Get major market indices data."""
-        if not self.api_key:
-            logger.warning("[TwelveData] Using dummy indices - no API key")
-            return DUMMY_INDICES
-        
-        # Try to fetch real indices - NIFTY 50 and SENSEX
+        """Get major Indian market indices using Yahoo Finance."""
         indices_data = []
         
-        for symbol, name in [("NIFTY 50", "NIFTY 50"), ("BSE SENSEX", "BSE SENSEX")]:
-            logger.info(f"[TwelveData] Fetching quote for {symbol}")
-            data = self._make_request("quote", {"symbol": symbol, "interval": "1day"})
-            if data and "close" in data:
-                try:
-                    prev_close = float(data.get("previous_close", 0) or 0)
-                    current = float(data.get("close", 0) or 0)
-                    change = current - prev_close if prev_close else 0
+        # Use Yahoo Finance for real-time NSE/BSE indices
+        if YFINANCE_AVAILABLE:
+            try:
+                logger.info("[MarketData] Fetching real-time Indian indices from Yahoo Finance")
+                
+                # NIFTY 50 - Yahoo Finance ticker: ^NSEI
+                nifty = yf.Ticker("^NSEI")
+                nifty_hist = nifty.history(period="2d")
+                if len(nifty_hist) >= 2:
+                    current = nifty_hist['Close'].iloc[-1]
+                    prev_close = nifty_hist['Close'].iloc[-2]
+                    change = current - prev_close
                     change_pct = (change / prev_close * 100) if prev_close else 0
                     
                     indices_data.append({
-                        "symbol": symbol.replace(" ", ""),
-                        "name": name,
+                        "symbol": "NIFTY50",
+                        "name": "NIFTY 50",
                         "price": round(current, 2),
                         "change": round(change, 2),
                         "change_percent": round(change_pct, 2)
                     })
-                    logger.info(f"[TwelveData] Got {symbol}: {current} ({change_pct:+.2f}%)")
-                except (ValueError, TypeError) as e:
-                    logger.warning(f"[TwelveData] Error parsing {symbol} data: {e}")
-            else:
-                logger.warning(f"[TwelveData] No data returned for {symbol}: {data}")
+                    logger.info(f"[MarketData] NIFTY 50: {current:,.2f} ({change_pct:+.2f}%)")
+                
+                # BSE SENSEX - Yahoo Finance ticker: ^BSESN
+                sensex = yf.Ticker("^BSESN")
+                sensex_hist = sensex.history(period="2d")
+                if len(sensex_hist) >= 2:
+                    current = sensex_hist['Close'].iloc[-1]
+                    prev_close = sensex_hist['Close'].iloc[-2]
+                    change = current - prev_close
+                    change_pct = (change / prev_close * 100) if prev_close else 0
+                    
+                    indices_data.append({
+                        "symbol": "SENSEX",
+                        "name": "BSE SENSEX",
+                        "price": round(current, 2),
+                        "change": round(change, 2),
+                        "change_percent": round(change_pct, 2)
+                    })
+                    logger.info(f"[MarketData] SENSEX: {current:,.2f} ({change_pct:+.2f}%)")
+                
+                # NIFTY Bank - Yahoo Finance ticker: ^NSEBANK
+                bank_nifty = yf.Ticker("^NSEBANK")
+                bank_hist = bank_nifty.history(period="2d")
+                if len(bank_hist) >= 2:
+                    current = bank_hist['Close'].iloc[-1]
+                    prev_close = bank_hist['Close'].iloc[-2]
+                    change = current - prev_close
+                    change_pct = (change / prev_close * 100) if prev_close else 0
+                    
+                    indices_data.append({
+                        "symbol": "NIFTYBANK",
+                        "name": "NIFTY Bank",
+                        "price": round(current, 2),
+                        "change": round(change, 2),
+                        "change_percent": round(change_pct, 2)
+                    })
+                    logger.info(f"[MarketData] NIFTY Bank: {current:,.2f} ({change_pct:+.2f}%)")
+                
+                # India VIX - Yahoo Finance ticker: ^INDIAVIX
+                vix = yf.Ticker("^INDIAVIX")
+                vix_hist = vix.history(period="2d")
+                if len(vix_hist) >= 2:
+                    current = vix_hist['Close'].iloc[-1]
+                    prev_close = vix_hist['Close'].iloc[-2]
+                    change = current - prev_close
+                    change_pct = (change / prev_close * 100) if prev_close else 0
+                    
+                    indices_data.append({
+                        "symbol": "INDIAVIX",
+                        "name": "India VIX",
+                        "price": round(current, 2),
+                        "change": round(change, 2),
+                        "change_percent": round(change_pct, 2)
+                    })
+                    logger.info(f"[MarketData] India VIX: {current:,.2f} ({change_pct:+.2f}%)")
+                
+                if indices_data:
+                    return indices_data
+                    
+            except Exception as e:
+                logger.error(f"[MarketData] Yahoo Finance error: {e}")
         
-        if not indices_data:
-            logger.warning("[TwelveData] No indices fetched, using dummy data")
+        # Fallback: Try Twelve Data API
+        if self.api_key:
+            for symbol, name in [("NIFTY 50", "NIFTY 50"), ("BSE SENSEX", "BSE SENSEX")]:
+                logger.info(f"[MarketData] Trying Twelve Data for {symbol}")
+                data = self._make_request("quote", {"symbol": symbol, "interval": "1day"})
+                if data and "close" in data:
+                    try:
+                        prev_close = float(data.get("previous_close", 0) or 0)
+                        current = float(data.get("close", 0) or 0)
+                        change = current - prev_close if prev_close else 0
+                        change_pct = (change / prev_close * 100) if prev_close else 0
+                        
+                        indices_data.append({
+                            "symbol": symbol.replace(" ", ""),
+                            "name": name,
+                            "price": round(current, 2),
+                            "change": round(change, 2),
+                            "change_percent": round(change_pct, 2)
+                        })
+                        logger.info(f"[MarketData] Got {symbol} from Twelve Data: {current}")
+                    except (ValueError, TypeError) as e:
+                        logger.warning(f"[MarketData] Error parsing {symbol}: {e}")
         
-        return indices_data if indices_data else DUMMY_INDICES
+        if indices_data:
+            return indices_data
+        
+        logger.warning("[MarketData] Using dummy data - all API sources failed")
+        return DUMMY_INDICES
     
     def get_market_state(self) -> Dict[str, Any]:
         """Get overall market state/overview."""

@@ -441,14 +441,6 @@ class FinnhubTool:
             }
         
         return data
-            "logo": "https://logo.clearbit.com/apple.com",
-            "marketCapitalization": 2800.5,
-            "name": f"{symbol.upper()} Inc",
-            "phone": "1-408-996-1010",
-            "shareOutstanding": 15400.0,
-            "ticker": symbol.upper(),
-            "weburl": f"https://www.{symbol.lower()}.com"
-        }
 
 # Global instance
 finnhub_tool = FinnhubTool()
