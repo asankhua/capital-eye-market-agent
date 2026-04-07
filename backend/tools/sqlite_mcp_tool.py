@@ -265,11 +265,22 @@ class SQLiteCacheTool:
             return None
 
     @classmethod
-    async def set_cache(cls, tool_name: str, cache_key: str, data: dict[str, Any]):
+    async def set_cache(cls, tool_name: str, cache_key: str, data: dict[str, Any], ttl: int = None):
         """
         Store an API response in the cache.
         Uses MCP if available, otherwise direct SQLite.
+        
+        Args:
+            tool_name: Name of the tool
+            cache_key: Cache key
+            data: Data to cache
+            ttl: Time to live in seconds (optional, stored in data for expiry check)
         """
+        # Add TTL to data if provided
+        if ttl:
+            data['_cache_ttl'] = ttl
+            data['_cached_at'] = time.time()
+        
         # Sanitize inputs to prevent SQL injection
         safe_tool = tool_name.replace("'", "''")
         safe_key = cache_key.replace("'", "''")

@@ -1,49 +1,53 @@
-"""NSE Corporate Actions - Fetches dividend announcements from NSE India API.
+"""BSE Corporate Actions - Fetches dividend announcements from BSE India API.
 
-Uses direct HTTP requests to NSE official API - no external library dependencies.
+Uses direct HTTP requests to BSE official API - no external library dependencies.
+Includes caching to minimize API calls and respect rate limits.
 """
 
 import logging
 import requests
-import pandas as pd
 from typing import List, Dict, Any, Optional
 from datetime import datetime, timedelta
+import time
 
-logger = logging.getLogger("market_analyst.tools.nse_dividend")
+from backend.tools.sqlite_mcp_tool import SQLiteMCPTool
+
+logger = logging.getLogger("market_analyst.tools.bse_dividend")
 
 
-class NSEDividendTool:
-    """Tool for fetching Indian stock dividend data from NSE Corporate Actions."""
+class BSEDividendTool:
+    """Tool for fetching Indian stock dividend data from BSE Corporate Actions."""
     
     def __init__(self):
-        self.base_url = "https://www.nseindia.com"
+        self.base_url = "https://api.bseindia.com/BseIndiaAPI/api"
         self.session = requests.Session()
         # Set headers to mimic browser
         self.session.headers.update({
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-            'Accept': 'application/json',
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'Accept': 'application/json, text/plain, */*',
             'Accept-Language': 'en-US,en;q=0.9',
-            'Accept-Encoding': 'gzip, deflate, br',
-            'Referer': 'https://www.nseindia.com/companies-listing/corporate-filings-actions'
+            'Referer': 'https://www.bseindia.com/',
+            'Origin': 'https://www.bseindia.com'
         })
-        self._cookies_set = False
-        logger.info("[NSEDividendTool] Initialized with direct NSE API")
-        
-    def _get_cookies(self):
-        """Get NSE session cookies."""
-        try:
-            response = self.session.get(self.base_url, timeout=10)
-            response.raise_for_status()
-            self._cookies_set = True
-            logger.info("[NSEDividendTool] Got NSE session cookies")
-        except Exception as e:
-            logger.error(f"[NSEDividendTool] Failed to get cookies: {e}")
-            self._cookies_set = False
+        self._last_request_time = 0
+        self._min_request_interval = 2  # Minimum seconds between requests to respect rate limits
+        logger.info("[BSEDividendTool] Initialized with BSE API")
     
+    def _rate_limit(self):
+        """Ensure we don't make requests too frequently."""
+        current_time = time.time()
+        time_since_last = current_time - self._last_request_time
+        if time_since_last < self._min_request_interval:
+            sleep_time = self._min_request_interval - time_since_last
+            logger.debug(f"[BSEDividendTool] Rate limiting: sleeping {sleep_time:.2f}s")
+            time.sleep(sleep_time)
+        self._last_request_time = time.time()
+        
     def _parse_amount(self, purpose: str) -> Optional[float]:
         """Extract dividend amount from purpose string."""
         import re
         try:
+            # Match patterns like "Rs. 6.50", "Rs 6.50", "Rs.6.50", "Dividend Rs. 6.50"
             match = re.search(r'Rs\.?\s*([\d.]+)', purpose, re.IGNORECASE)
             if match:
                 return float(match.group(1))
@@ -78,235 +82,147 @@ class NSEDividendTool:
             return date_str
         
     async def get_dividend_announcements(self, ticker: str = None) -> Dict[str, Any]:
-        """Get dividend announcements from NSE Corporate Actions.
+        """Get dividend announcements from BSE Corporate Actions.
         
         Args:
             ticker: Stock ticker symbol (e.g., "ITC", "RELIANCE"). If None, returns all recent dividends.
             
         Returns:
-            dict with dividend information from NSE
+            dict with dividend information from BSE
         """
-        logger.info(f"[NSEDividendTool] Fetching dividend announcements for {ticker or 'all stocks'}")
+        cache_key = f"bse_dividends_{ticker or 'ALL'}_{datetime.now().strftime('%Y%m%d')}"
+        
+        # Check cache first (cache for 1 hour)
+        try:
+            cached = await SQLiteMCPTool.get_cache("bse_dividends", cache_key)
+            if cached:
+                cached_time = cached.get("cached_at")
+                if cached_time:
+                    cache_dt = datetime.fromisoformat(cached_time)
+                    # Cache valid for 1 hour
+                    if (datetime.now() - cache_dt).total_seconds() < 3600:
+                        logger.info(f"[BSEDividendTool] Returning cached dividend data for {ticker or 'all stocks'}")
+                        return cached
+        except Exception as e:
+            logger.warning(f"[BSEDividendTool] Cache check failed: {e}")
+        
+        logger.info(f"[BSEDividendTool] Fetching dividend announcements for {ticker or 'all stocks'}")
+        
+        # Rate limit check
+        self._rate_limit()
         
         try:
-            # Get session cookies first
-            if not self._cookies_set:
-                self._get_cookies()
+            # BSE Corporate Actions API endpoint
+            # Get last 30 days of corporate actions
+            from_date = (datetime.now() - timedelta(days=30)).strftime('%Y%m%d')
+            to_date = datetime.now().strftime('%Y%m%d')
             
-            # NSE Corporate Actions API endpoint
-            url = f"{self.base_url}/api/corporate-actions"
+            url = f"{self.base_url}/CorpAction/w"
             
-            # Parameters for dividend filter - last 90 days
             params = {
-                'index': 'equities',
-                'from_date': (datetime.now() - timedelta(days=90)).strftime('%d-%m-%Y'),
-                'to_date': datetime.now().strftime('%d-%m-%Y'),
-                'subject': 'dividend'
+                'FromDate': from_date,
+                'ToDate': to_date,
+                'Flag': 'DI'  # Dividend announcements
             }
             
-            logger.info(f"[NSEDividendTool] Calling NSE API: {url}")
-            response = self.session.get(url, params=params, timeout=15)
+            logger.info(f"[BSEDividendTool] Calling BSE API: {url}")
+            response = self.session.get(url, params=params, timeout=20)
             response.raise_for_status()
             
-            # Parse response
+            # Parse response - BSE returns JSON
             data = response.json()
             
-            if not data or 'data' not in data:
-                logger.warning("[NSEDividendTool] No data returned from NSE API")
-                return self._get_sample_data(ticker)
-            
-            # Convert to list of dicts
-            actions = data.get('data', [])
-            if not actions:
-                logger.warning("[NSEDividendTool] Empty data from NSE API")
-                return self._get_sample_data(ticker)
+            if not data or not isinstance(data, list):
+                logger.warning("[BSEDividendTool] No data returned from BSE API")
+                return self._get_error_response(ticker, "No data from BSE API")
             
             dividends = []
-            for item in actions:
-                symbol = item.get('symbol', item.get('security', ''))
+            for item in data:
+                symbol = item.get('scrip_code', item.get('security_code', ''))
                 if not symbol:
+                    continue
+                
+                # Filter by ticker if specified
+                if ticker:
+                    clean_ticker = ticker.upper().replace('.NS', '').replace('.BO', '')
+                    if clean_ticker not in symbol.upper():
+                        continue
+                
+                purpose = item.get('purpose', '')
+                if not purpose or 'dividend' not in purpose.lower():
                     continue
                     
                 dividend = {
                     'ticker': str(symbol).replace('.NS', '').replace('.BO', '').strip(),
-                    'company_name': item.get('companyName', item.get('company', symbol)),
-                    'dividend_amount': self._parse_amount(item.get('purpose', item.get('description', ''))),
-                    'dividend_type': self._extract_dividend_type(item.get('purpose', '')),
-                    'ex_dividend_date': self._parse_date(item.get('exDate', item.get('ex_date', ''))),
-                    'record_date': self._parse_date(item.get('recDate', item.get('record_date', ''))),
-                    'announcement_date': self._parse_date(item.get('anncDate', item.get('announcement_date', ''))),
-                    'source': 'NSE Corporate Actions'
+                    'company_name': item.get('security_name', item.get('company_name', symbol)),
+                    'dividend_amount': self._parse_amount(purpose),
+                    'dividend_type': self._extract_dividend_type(purpose),
+                    'ex_dividend_date': self._parse_date(item.get('ex_date', item.get('exDate', ''))),
+                    'record_date': self._parse_date(item.get('record_date', item.get('recDate', ''))),
+                    'announcement_date': self._parse_date(item.get('annc_date', item.get('anncDate', ''))),
+                    'source': 'BSE Corporate Actions'
                 }
                 dividends.append(dividend)
             
-            logger.info(f"[NSEDividendTool] Found {len(dividends)} dividend announcements")
+            logger.info(f"[BSEDividendTool] Found {len(dividends)} dividend announcements from BSE")
             
-            # Filter by ticker if specified
-            if ticker:
-                clean_ticker = ticker.upper().replace('.NS', '').replace('.BO', '')
-                filtered = [d for d in dividends if d['ticker'] == clean_ticker]
-                if filtered:
-                    return {
-                        'ticker': clean_ticker,
-                        'company_name': filtered[0]['company_name'],
-                        'dividend_rate': filtered[0]['dividend_amount'],
-                        'dividend_yield': None,
-                        'current_price': None,
-                        'ex_dividend_date': filtered[0]['ex_dividend_date'],
-                        'record_date': filtered[0]['record_date'],
-                        'payout_ratio': None,
-                        'announcement_date': filtered[0]['announcement_date'],
-                        'history': filtered,
-                        'source': 'NSE Corporate Actions',
-                        'error': None
-                    }
-                else:
-                    return {
-                        'ticker': clean_ticker,
-                        'company_name': clean_ticker,
-                        'dividend_rate': None,
-                        'dividend_yield': None,
-                        'current_price': None,
-                        'ex_dividend_date': None,
-                        'record_date': None,
-                        'payout_ratio': None,
-                        'announcement_date': None,
-                        'history': [],
-                        'source': 'NSE Corporate Actions - No data found',
-                        'error': f'No dividend announcements found for {clean_ticker}'
-                    }
+            if not dividends:
+                return self._get_error_response(ticker, "No dividend announcements found")
             
-            # Return all announcements
-            return {
-                'ticker': 'ALL',
-                'company_name': 'Multiple Companies',
+            # Prepare result
+            result = {
+                'ticker': ticker or 'ALL',
+                'company_name': 'Multiple Companies' if not ticker else dividends[0]['company_name'],
                 'announcements': dividends,
                 'count': len(dividends),
-                'source': 'NSE Corporate Actions',
+                'source': 'BSE Corporate Actions',
                 'search_date': datetime.now().strftime("%d %B %Y"),
-                'error': None
+                'error': None,
+                'cached_at': datetime.now().isoformat()
             }
             
+            # Cache the result
+            try:
+                await SQLiteMCPTool.set_cache("bse_dividends", cache_key, result, ttl=3600)
+                logger.info(f"[BSEDividendTool] Cached dividend data for {ticker or 'all stocks'}")
+            except Exception as e:
+                logger.warning(f"[BSEDividendTool] Failed to cache data: {e}")
+            
+            return result
+            
         except Exception as e:
-            logger.error(f"[NSEDividendTool] Error fetching from NSE: {e}", exc_info=True)
-            return self._get_sample_data(ticker)
+            logger.error(f"[BSEDividendTool] Error fetching from BSE: {e}", exc_info=True)
+            return self._get_error_response(ticker, str(e))
     
-    def _get_sample_data(self, ticker: str = None) -> Dict[str, Any]:
-        """Return sample dividend data when NSE API fails."""
-        logger.info("[NSEDividendTool] Returning sample dividend data")
-        
-        today = datetime.now()
-        sample_data = [
-            {
-                'ticker': 'ITC',
-                'company_name': 'ITC Ltd',
-                'dividend_amount': 6.50,
-                'dividend_type': 'Final',
-                'ex_dividend_date': (today + timedelta(days=30)).strftime('%Y-%m-%d'),
-                'record_date': (today + timedelta(days=32)).strftime('%Y-%m-%d'),
-                'announcement_date': today.strftime('%Y-%m-%d'),
-                'source': 'Sample Data (NSE API unavailable)'
-            },
-            {
-                'ticker': 'RELIANCE',
-                'company_name': 'Reliance Industries Ltd',
-                'dividend_amount': 10.00,
-                'dividend_type': 'Final',
-                'ex_dividend_date': (today + timedelta(days=45)).strftime('%Y-%m-%d'),
-                'record_date': (today + timedelta(days=47)).strftime('%Y-%m-%d'),
-                'announcement_date': today.strftime('%Y-%m-%d'),
-                'source': 'Sample Data (NSE API unavailable)'
-            },
-            {
-                'ticker': 'TCS',
-                'company_name': 'Tata Consultancy Services Ltd',
-                'dividend_amount': 12.00,
-                'dividend_type': 'Interim',
-                'ex_dividend_date': (today + timedelta(days=15)).strftime('%Y-%m-%d'),
-                'record_date': (today + timedelta(days=17)).strftime('%Y-%m-%d'),
-                'announcement_date': today.strftime('%Y-%m-%d'),
-                'source': 'Sample Data (NSE API unavailable)'
-            },
-            {
-                'ticker': 'HDFCBANK',
-                'company_name': 'HDFC Bank Ltd',
-                'dividend_amount': 2.50,
-                'dividend_type': 'Final',
-                'ex_dividend_date': (today + timedelta(days=20)).strftime('%Y-%m-%d'),
-                'record_date': (today + timedelta(days=22)).strftime('%Y-%m-%d'),
-                'announcement_date': today.strftime('%Y-%m-%d'),
-                'source': 'Sample Data (NSE API unavailable)'
-            },
-            {
-                'ticker': 'INFY',
-                'company_name': 'Infosys Ltd',
-                'dividend_amount': 21.00,
-                'dividend_type': 'Final',
-                'ex_dividend_date': (today + timedelta(days=25)).strftime('%Y-%m-%d'),
-                'record_date': (today + timedelta(days=27)).strftime('%Y-%m-%d'),
-                'announcement_date': today.strftime('%Y-%m-%d'),
-                'source': 'Sample Data (NSE API unavailable)'
-            },
-            {
-                'ticker': 'HINDUNILVR',
-                'company_name': 'Hindustan Unilever Ltd',
-                'dividend_amount': 24.00,
-                'dividend_type': 'Final',
-                'ex_dividend_date': (today + timedelta(days=35)).strftime('%Y-%m-%d'),
-                'record_date': (today + timedelta(days=37)).strftime('%Y-%m-%d'),
-                'announcement_date': today.strftime('%Y-%m-%d'),
-                'source': 'Sample Data (NSE API unavailable)'
-            },
-        ]
-        
+    def _get_error_response(self, ticker: str = None, error_msg: str = "") -> Dict[str, Any]:
+        """Return error response - NO sample data."""
         if ticker:
             clean_ticker = ticker.upper().replace('.NS', '').replace('.BO', '')
-            filtered = [d for d in sample_data if d['ticker'] == clean_ticker]
-            if filtered:
-                return {
-                    'ticker': clean_ticker,
-                    'company_name': filtered[0]['company_name'],
-                    'dividend_rate': filtered[0]['dividend_amount'],
-                    'dividend_yield': None,
-                    'current_price': None,
-                    'ex_dividend_date': filtered[0]['ex_dividend_date'],
-                    'record_date': filtered[0]['record_date'],
-                    'payout_ratio': None,
-                    'announcement_date': filtered[0]['announcement_date'],
-                    'history': filtered,
-                    'source': filtered[0]['source'],
-                    'error': None
-                }
-            else:
-                return {
-                    'ticker': clean_ticker,
-                    'company_name': clean_ticker,
-                    'dividend_rate': None,
-                    'dividend_yield': None,
-                    'current_price': None,
-                    'ex_dividend_date': None,
-                    'record_date': None,
-                    'payout_ratio': None,
-                    'announcement_date': None,
-                    'history': [],
-                    'source': 'Sample Data - No data found',
-                    'error': f'No dividend data found for {clean_ticker}'
-                }
+            return {
+                'ticker': clean_ticker,
+                'company_name': clean_ticker,
+                'announcements': [],
+                'count': 0,
+                'source': 'BSE Corporate Actions - Error',
+                'search_date': datetime.now().strftime("%d %B %Y"),
+                'error': f'Failed to fetch dividend data: {error_msg}'
+            }
         
         return {
             'ticker': 'ALL',
             'company_name': 'Multiple Companies',
-            'announcements': sample_data,
-            'count': len(sample_data),
-            'source': 'Sample Data (NSE API unavailable)',
+            'announcements': [],
+            'count': 0,
+            'source': 'BSE Corporate Actions - Error',
             'search_date': datetime.now().strftime("%d %B %Y"),
-            'error': None
+            'error': f'Failed to fetch dividend data: {error_msg}'
         }
 
 
 # Global instance
-nse_dividend_tool = NSEDividendTool()
+bse_dividend_tool = BSEDividendTool()
 
 
-# Export
-__all__ = ['nse_dividend_tool', 'NSEDividendTool']
+# Export - keep old name for compatibility
+nse_dividend_tool = bse_dividend_tool
+__all__ = ['bse_dividend_tool', 'nse_dividend_tool', 'BSEDividendTool']
