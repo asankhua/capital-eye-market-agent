@@ -13,6 +13,7 @@ interface IndexData {
 
 export const MarketOverview: React.FC = () => {
   const [indices, setIndices] = useState<IndexData[]>([]);
+  const [timestamp, setTimestamp] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -25,6 +26,7 @@ export const MarketOverview: React.FC = () => {
     try {
       const data = await api.getTwelveDataMarketOverview();
       setIndices(data.indices || []);
+      setTimestamp(data.timestamp || '');
     } catch (err) {
       setError('Failed to load market overview');
       console.error(err);
@@ -68,10 +70,23 @@ export const MarketOverview: React.FC = () => {
 
   return (
     <div style={{ padding: '24px' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
         <Globe size={28} color="#2563eb" />
         <h2 style={{ fontSize: '24px', fontWeight: 700, color: '#0f172a' }}>Market Overview</h2>
       </div>
+      {timestamp && (
+        <p style={{ fontSize: '12px', color: '#6b7280', marginBottom: '24px', marginLeft: '40px' }}>
+          Last updated: {new Date(timestamp).toLocaleString('en-IN', { 
+            timeZone: 'Asia/Kolkata',
+            day: '2-digit',
+            month: 'short',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit'
+          })} IST (from NSE)
+        </p>
+      )}
 
       {/* Market Indices */}
       <div style={{ marginBottom: '32px' }}>

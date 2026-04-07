@@ -112,6 +112,10 @@ class NSEMarketTool:
         
         logger.info(f"[NSEMarketTool] Market state: {len(indices)} indices")
         
+        return {
+            "indices": indices,
+            "timestamp": datetime.now().isoformat()
+        }
     def get_stock_quote(self, symbol: str) -> Dict[str, Any]:
         """Get real-time stock quote for a specific symbol from NSE."""
         try:
