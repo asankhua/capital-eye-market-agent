@@ -21,7 +21,6 @@ export const NewsInsights: React.FC = () => {
 
   useEffect(() => {
     loadNews();
-    loadSectors();
   }, [category]);
 
   const loadNews = async () => {
@@ -45,32 +44,6 @@ export const NewsInsights: React.FC = () => {
       })} IST (from Indian Market Sources)`);
     } catch (err) {
       setError('Failed to load news');
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const loadSectors = async () => {
-    setLoading(true);
-    try {
-      const data = await api.getNSESectorPerformance();
-      // Map NSE sector names to match interface
-      const mappedSectors = (data.sectors || []).map((s: any) => ({
-        sector: s.name || s.sector,
-        change_percent: s.change_percent
-      }));
-      setSectors(mappedSectors);
-      setLastUpdated(`${new Date().toLocaleString('en-IN', { 
-        timeZone: 'Asia/Kolkata',
-        day: 'numeric',
-        month: 'short',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-      })} IST (from ${data.source || 'NSE'})`);
-    } catch (err) {
-      setError('Failed to load sector performance');
       console.error(err);
     } finally {
       setLoading(false);
