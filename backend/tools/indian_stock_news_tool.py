@@ -53,7 +53,7 @@ class IndianStockNewsTool:
         return any(keyword.lower() in text for keyword in IndianStockNewsTool.INDIAN_MARKET_KEYWORDS)
     @staticmethod
     def _parse_rss_feed(feed_url: str, source_name: str, max_items: int = 10) -> list[dict]:
-        """Parse an RSS feed and return news items filtered for Indian market relevance."""
+        """Parse an RSS feed and return news items."""
         try:
             headers = {
                 "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
@@ -66,47 +66,63 @@ class IndianStockNewsTool:
             # Handle both RSS 2.0 and Atom formats
             items = root.findall('.//item') or root.findall('.//{http://www.w3.org/2005/Atom}entry')
             
-            news_items = []
-            for item in items:
-                title_elem = item.find('title') or item.find('.//{http://www.w3.org/2005/Atom}title')
-                link_elem = item.find('link') or item.find('.//{http://www.w3.org/2005/Atom}link')
-                desc_elem = item.find('description') or item.find('.//{http://www.w3.org/2005/Atom}summary')
-                pub_date_elem = item.find('pubDate') or item.find('.//{http://www.w3.org/2005/Atom}published')
-                
-                # Extract text including from CDATA sections using itertext()
-                title = ''.join(title_elem.itertext()) if title_elem is not None else ''
-                link = ''.join(link_elem.itertext()) if link_elem is not None else ''
-                description = ''.join(desc_elem.itertext()) if desc_elem is not None else ''
-                pub_date = ''.join(pub_date_elem.itertext()) if pub_date_elem is not None else ''
-                
-                title = title.strip()
-                description_clean = description.strip()
-                
-                # Clean up HTML tags from description using regex
-                import re
-                description_clean = re.sub(r'<[^>]+>', '', description_clean)
-                description_clean = re.sub(r'\s+', ' ', description_clean).strip()
-                
-                # Filter for Indian market relevance
-                if not IndianStockNewsTool._is_indian_market_relevant(title, description_clean):
-                    continue
-                
-                news_items.append({
-                    "headline": title,
-                    "source": source_name,
-                    "url": link.strip(),
-                    "datetime": IndianStockNewsTool._parse_date(pub_date) if pub_date else int(datetime.now().timestamp()),
-                    "summary": (description_clean[:200] + "..." if len(description_clean) > 200 else description_clean) if description_clean else "",
-                    "category": "general"
-                })
-                
-                if len(news_items) >= max_items:
-                    break
+            logger.info(f"[IndianStockNews] Found {len(items)} items in RSS feed from {source_name}")
             
-            logger.info(f"[IndianStockNews] Fetched {len(news_items)} relevant items from {source_name}")
+            news_items = []
+            import re
+            
+            for item in items:
+                try:
+                    title_elem = item.find('title')
+                    link_elem = item.find('link')
+                    desc_elem = item.find('description')
+                    pub_date_elem = item.find('pubDate')
+                    source_elem = item.find('source')
+                    
+                    # Extract text content
+                    title = title_elem.text if title_elem is not None and title_elem.text else ''
+                    link = link_elem.text if link_elem is not None and link_elem.text else ''
+                    description = desc_elem.text if desc_elem is not None and desc_elem.text else ''
+                    pub_date = pub_date_elem.text if pub_date_elem is not None and pub_date_elem.text else ''
+                    
+                    # Get source from source element or use default
+                    source = source_name
+                    if source_elem is not None and source_elem.text:
+                        source = source_elem.text
+                    
+                    title = title.strip()
+                    link = link.strip()
+                    
+                    # Clean up HTML tags from description
+                    if description:
+                        description_clean = re.sub(r'<[^>]+>', '', description)
+                        description_clean = re.sub(r'\s+', ' ', description_clean).strip()
+                    else:
+                        description_clean = title
+                    
+                    # Skip if no title or link
+                    if not title or not link:
+                        continue
+                    
+                    news_items.append({
+                        "headline": title,
+                        "source": source,
+                        "url": link,
+                        "datetime": IndianStockNewsTool._parse_date(pub_date) if pub_date else int(datetime.now().timestamp()),
+                        "summary": (description_clean[:200] + "..." if len(description_clean) > 200 else description_clean),
+                        "category": "general"
+                    })
+                    
+                    if len(news_items) >= max_items:
+                        break
+                except Exception as item_error:
+                    logger.warning(f"[IndianStockNews] Error parsing item: {item_error}")
+                    continue
+            
+            logger.info(f"[IndianStockNews] Successfully parsed {len(news_items)} items from {source_name}")
             return news_items
         except Exception as e:
-            logger.warning(f"[IndianStockNews] Failed to fetch from {source_name}: {e}")
+            logger.error(f"[IndianStockNews] Failed to fetch from {source_name}: {e}")
             return []
 
     @staticmethod
