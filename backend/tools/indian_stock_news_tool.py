@@ -12,6 +12,7 @@ import os
 from datetime import datetime
 from typing import Any
 import requests
+import xml.etree.ElementTree as ET
 
 from backend.tools.sqlite_mcp_tool import SQLiteMCPTool
 
