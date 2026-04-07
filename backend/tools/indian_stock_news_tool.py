@@ -7,11 +7,14 @@ Provides:
 """
 
 import asyncio
+import logging
 from datetime import datetime, timedelta
 from typing import Any
 from duckduckgo_search import DDGS
 
 from backend.tools.sqlite_mcp_tool import SQLiteMCPTool
+
+logger = logging.getLogger("market_analyst.tools.indian_stock_news")
 
 class IndianStockNewsTool:
     """Tool for fetching Indian stock market news using DuckDuckGo search."""

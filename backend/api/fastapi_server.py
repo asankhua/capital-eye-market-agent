@@ -838,14 +838,17 @@ async def twelve_data_indices():
 @app.get("/indian_news/market")
 async def indian_market_news(max_results: int = 10):
     """Get Indian stock market news from Moneycontrol, Economic Times, etc."""
-    logger.info("GET /indian_news/market")
+    logger.info(f"GET /indian_news/market - max_results={max_results}")
     
     try:
         from backend.tools.indian_stock_news_tool import indian_stock_news_tool
         news = await indian_stock_news_tool.get_market_news(max_results=max_results)
+        logger.info(f"Indian market news result: count={news.get('count', 0)}, source={news.get('source')}")
+        if news.get('error'):
+            logger.error(f"Indian news error: {news.get('error')}")
         return news
     except Exception as e:
-        logger.error("Error fetching Indian market news: %s", e, exc_info=True)
+        logger.error(f"Error fetching Indian market news: {e}", exc_info=True)
         raise HTTPException(status_code=503, detail=f"Failed to fetch news: {str(e)}")
 
 
