@@ -4,13 +4,14 @@ import { Coins, Calendar, Search, Clock } from 'lucide-react';
 import { api } from '../api';
 
 interface DividendAnnouncement {
-  ticker: string;
+  symbol: string;
   company_name: string;
-  dividend_amount?: number;
-  dividend_type?: string;
-  ex_dividend_date?: string;
+  purpose: string;
+  dividend_type: string;
+  ex_date?: string;
   record_date?: string;
   announcement_date?: string;
+  face_value?: string;
   source?: string;
 }
 
@@ -29,9 +30,21 @@ export const DividendTracker: React.FC = () => {
     setLoading(true);
     setError('');
     try {
-      const data = await api.getAllMoneyControlDividends();
-      if (data.announcements && data.announcements.length > 0) {
-        setDividends(data.announcements);
+      const data = await api.getBSEDividendAnnouncements(30, 30);
+      const allDividends = [
+        ...(data.recent?.dividends || []),
+        ...(data.upcoming?.dividends || [])
+      ];
+      
+      // Remove duplicates based on symbol + record_date
+      const uniqueDividends = allDividends.filter((dividend, index, self) =>
+        index === self.findIndex((d) => (
+          d.symbol === dividend.symbol && d.record_date === dividend.record_date
+        ))
+      );
+      
+      if (uniqueDividends.length > 0) {
+        setDividends(uniqueDividends);
       } else {
         setDividends([]);
       }
@@ -42,7 +55,7 @@ export const DividendTracker: React.FC = () => {
         year: 'numeric',
         hour: '2-digit',
         minute: '2-digit'
-      })} IST (from ${data.source || 'NSE'})`);
+      })} IST (from BSE Corporate Actions)`);
     } catch (err) {
       setError('Failed to load dividend announcements');
       console.error(err);
@@ -74,7 +87,7 @@ export const DividendTracker: React.FC = () => {
   };
 
   const filteredDividends = dividends.filter(d => 
-    d.ticker?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    d.symbol?.toLowerCase().includes(searchQuery.toLowerCase()) ||
     d.company_name?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
@@ -182,7 +195,7 @@ export const DividendTracker: React.FC = () => {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '16px' }}>
         {filteredDividends.map((item, index) => (
           <motion.div
-            key={`${item.ticker}-${index}`}
+            key={`${item.symbol}-${index}`}
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.05 }}
@@ -209,7 +222,7 @@ export const DividendTracker: React.FC = () => {
                 textTransform: 'uppercase',
                 letterSpacing: '0.5px',
               }}>
-                {item.ticker}
+                {item.symbol}
               </span>
               <span style={{ fontSize: '12px', color: '#9ca3af', display: 'flex', alignItems: 'center', gap: '4px' }}>
                 <Clock size={12} />
@@ -227,10 +240,7 @@ export const DividendTracker: React.FC = () => {
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                 <Coins size={16} color="#10b981" />
                 <span style={{ fontSize: '14px', fontWeight: 600, color: '#10b981' }}>
-                  ₹{item.dividend_amount?.toFixed(2) || 'N/A'}
-                </span>
-                <span style={{ fontSize: '12px', color: '#6b7280' }}>
-                  {item.dividend_type || 'Dividend'}
+                  {item.purpose || 'Dividend'}
                 </span>
               </div>
             </div>
@@ -247,7 +257,7 @@ export const DividendTracker: React.FC = () => {
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                 <Calendar size={14} color="#6b7280" />
                 <span style={{ fontSize: '12px', color: '#6b7280' }}>
-                  Ex-Date: {formatDate(item.ex_dividend_date)}
+                  Ex-Date: {formatDate(item.ex_date)}
                 </span>
               </div>
               {item.record_date && (
@@ -262,7 +272,7 @@ export const DividendTracker: React.FC = () => {
             {/* Source */}
             <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
               <span style={{ fontSize: '11px', color: '#9ca3af', fontWeight: 500 }}>
-                Source: {item.source || 'MoneyControl'}
+                Source: {item.source || 'BSE India'}
               </span>
             </div>
           </motion.div>
