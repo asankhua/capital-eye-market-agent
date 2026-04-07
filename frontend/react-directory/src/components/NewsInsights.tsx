@@ -95,7 +95,7 @@ export const NewsInsights: React.FC = () => {
           {lastUpdated && (
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '4px', fontSize: '12px', color: '#6b7280' }}>
               <Clock size={12} />
-              <span>Last updated: {lastUpdated} IST</span>
+              <span>Last updated: {lastUpdated}</span>
             </div>
           )}
         </div>
