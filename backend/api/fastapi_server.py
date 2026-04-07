@@ -750,74 +750,16 @@ async def debug_nsetools():
 
 @app.get("/twelve_data/market_overview")
 async def twelve_data_market_overview():
-    """Get market overview from Twelve Data - cached daily at 5PM IST (Mon-Fri only)."""
-    from datetime import datetime
-    import pytz
-    from backend.tools.sqlite_mcp_tool import SQLiteMCPTool
-    
+    """Get market overview from nsetools - real-time data."""
     logger.info("GET /twelve_data/market_overview")
     
-    # Check if we have cached data from today after 5PM IST
-    cache_key = "market_overview_daily"
-    cached = await SQLiteMCPTool.get_cache("market_overview", cache_key)
-    
-    if cached:
-        # Check if cache is from today after 5PM IST
-        cache_time = cached.get("cached_at")
-        if cache_time:
-            cache_dt = datetime.fromisoformat(cache_time)
-            now = datetime.now(pytz.timezone('Asia/Kolkata'))
-            
-            # Check if cache is from today (same date)
-            if cache_dt.date() == now.date() and cache_dt.hour >= 17:
-                logger.info("Returning cached market overview from today after 5PM IST")
-                return cached.get("data")
-    
-    # Get current time in IST
-    ist = pytz.timezone('Asia/Kolkata')
-    now_ist = datetime.now(ist)
-    
-    # Check if it's a weekday (Mon-Fri = 0-4) and after 5PM (17:00)
-    is_weekday = now_ist.weekday() < 5  # Monday=0, Friday=4
-    is_after_5pm = now_ist.hour >= 17
-    
-    logger.info(f"Market overview check - Weekday: {is_weekday}, After 5PM: {is_after_5pm}, Time: {now_ist}")
-    
-    # Only fetch fresh data if it's a weekday and after 5PM
-    if not is_weekday:
-        logger.info("Weekend - returning cached or fallback data")
-        # On weekends, return cached data or error
-        if cached:
-            return cached.get("data")
-        raise HTTPException(status_code=503, detail="Market data not available on weekends. Please check back on Monday after 5PM IST.")
-    
-    if not is_after_5pm:
-        logger.info("Before 5PM IST - returning cached or error")
-        # Before 5PM, return cached data from previous day or error
-        if cached:
-            return cached.get("data")
-        raise HTTPException(status_code=503, detail="Market data updates daily at 5PM IST. Please check back later.")
-    
-    # It's a weekday after 5PM - fetch fresh data
     try:
-        from backend.tools.twelve_data_tool import twelve_data_tool
-        overview = twelve_data_tool.get_market_state()
-        
-        # Cache with timestamp
-        cache_entry = {
-            "cached_at": now_ist.isoformat(),
-            "data": overview
-        }
-        await SQLiteMCPTool.set_cache("market_overview", cache_key, cache_entry, ttl=86400)  # 24 hour cache
-        
-        logger.info("Fresh market overview fetched and cached for today")
+        from backend.tools.nse_market_tool import nse_market_tool
+        overview = nse_market_tool.get_market_state()
+        logger.info("Fresh market overview fetched from nsetools")
         return overview
     except Exception as e:
-        logger.error("Error fetching Twelve Data market overview: %s", e, exc_info=True)
-        # If fetch fails, return cached data if available
-        if cached:
-            logger.info("Returning stale cached data due to fetch error")
-            return cached.get("data")
+        logger.error("Error fetching market overview from nsetools: %s", e, exc_info=True)
         raise HTTPException(status_code=503, detail=f"Failed to fetch market data: {str(e)}")
 
 
