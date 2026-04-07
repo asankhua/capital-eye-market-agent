@@ -184,7 +184,7 @@ class FinnhubTool:
     
     def __init__(self):
         # Read API key at runtime, not import time (for HF Secrets compatibility)
-        self.api_key = os.getenv("FINNHUB_API_KEY", "")
+        self.api_key = os.getenv("FINNHUB_API_KEY", "").strip()
         self.api_key_source = "HF Secrets" if self.api_key else "NOT SET"
         
         if self.api_key:
