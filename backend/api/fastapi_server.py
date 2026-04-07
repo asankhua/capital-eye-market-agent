@@ -680,15 +680,15 @@ async def finnhub_news(category: str = "general", symbol: str = None):
 
 @app.get("/finnhub/sector_performance")
 async def finnhub_sector_performance():
-    """Get sector performance data from Finnhub."""
-    logger.info("GET /finnhub/sector_performance")
+    """Get Indian sector performance data from NSE sectoral indices."""
+    logger.info("GET /finnhub/sector_performance - Using NSE Indian sectors")
     
     try:
-        from backend.tools.finnhub_tool import finnhub_tool
-        sectors = finnhub_tool.get_sector_performance()
-        return {"sectors": sectors, "count": len(sectors)}
+        from backend.tools.nse_market_tool import nse_market_tool
+        sectors = nse_market_tool.get_sector_performance()
+        return {"sectors": sectors, "count": len(sectors), "source": "NSE Sectoral Indices"}
     except Exception as e:
-        logger.error("Error fetching Finnhub sector performance: %s", e, exc_info=True)
+        logger.error("Error fetching NSE sector performance: %s", e, exc_info=True)
         raise HTTPException(status_code=503, detail=f"Failed to fetch sector performance: {str(e)}")
 
 

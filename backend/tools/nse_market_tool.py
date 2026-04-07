@@ -125,6 +125,50 @@ class NSEMarketTool:
             "indices": indices,
             "timestamp": datetime.now().isoformat()
         }
+    
+    def get_sector_performance(self) -> List[Dict]:
+        """Get Indian sector performance from NSE sectoral indices."""
+        logger.info("[NSEMarketTool] Fetching Indian sector performance...")
+        
+        # NSE Sectoral Indices mapping
+        sector_indices = {
+            "NIFTY BANK": "Banking",
+            "NIFTY IT": "Information Technology",
+            "NIFTY AUTO": "Automobile",
+            "NIFTY PHARMA": "Pharma",
+            "NIFTY FMCG": "FMCG",
+            "NIFTY METAL": "Metal",
+            "NIFTY REALTY": "Realty",
+            "NIFTY PSU BANK": "PSU Bank",
+            "NIFTY ENERGY": "Energy",
+            "NIFTY FIN SERVICE": "Financial Services",
+            "NIFTY MEDIA": "Media",
+            "NIFTY HEALTHCARE": "Healthcare"
+        }
+        
+        sectors = []
+        for index_name, sector_name in sector_indices.items():
+            try:
+                logger.info(f"[NSEMarketTool] Fetching sector: {sector_name}")
+                idx_data = self.nse.get_index_quote(index_name)
+                if idx_data:
+                    change_pct = float(idx_data.get("percentChange", 0))
+                    sectors.append({
+                        "name": sector_name,
+                        "change_percent": round(change_pct, 2),
+                        "index_name": index_name,
+                        "price": float(idx_data.get("last", 0))
+                    })
+                    logger.info(f"[NSEMarketTool] {sector_name}: {change_pct}%")
+            except Exception as e:
+                logger.warning(f"[NSEMarketTool] Could not fetch {sector_name}: {e}")
+                continue
+        
+        # Sort by change percent descending
+        sectors.sort(key=lambda x: x["change_percent"], reverse=True)
+        
+        logger.info(f"[NSEMarketTool] Total sectors fetched: {len(sectors)}")
+        return sectors
     def get_stock_quote(self, symbol: str) -> Dict[str, Any]:
         """Get real-time stock quote for a specific symbol from NSE."""
         try:

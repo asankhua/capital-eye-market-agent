@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { PieChart, TrendingUp, TrendingDown, Building2 } from 'lucide-react';
+import { PieChart, TrendingUp, TrendingDown, Building2, Clock } from 'lucide-react';
 import { api } from '../api';
 
 interface Sector {
@@ -12,6 +12,7 @@ export const SectorAnalysis: React.FC = () => {
   const [sectors, setSectors] = useState<Sector[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [lastUpdated, setLastUpdated] = useState<string>('');
 
   useEffect(() => {
     loadSectors();
@@ -21,7 +22,20 @@ export const SectorAnalysis: React.FC = () => {
     setLoading(true);
     try {
       const data = await api.getFinnhubSectorPerformance();
-      setSectors(data.sectors || []);
+      // Map NSE sector names to match interface
+      const mappedSectors = (data.sectors || []).map((s: any) => ({
+        sector: s.name || s.sector,
+        change_percent: s.change_percent
+      }));
+      setSectors(mappedSectors);
+      setLastUpdated(new Date().toLocaleString('en-IN', { 
+        timeZone: 'Asia/Kolkata',
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      }));
     } catch (err) {
       setError('Failed to load sector performance');
       console.error(err);
@@ -81,7 +95,15 @@ export const SectorAnalysis: React.FC = () => {
     <div style={{ padding: '24px' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px' }}>
         <PieChart size={28} color="#2563eb" />
-        <h2 style={{ fontSize: '24px', fontWeight: 700, color: '#0f172a' }}>Sector Analysis</h2>
+        <div style={{ flex: 1 }}>
+          <h2 style={{ fontSize: '24px', fontWeight: 700, color: '#0f172a' }}>Sector Analysis</h2>
+          {lastUpdated && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '4px', fontSize: '12px', color: '#6b7280' }}>
+              <Clock size={12} />
+              <span>Last updated: {lastUpdated} IST</span>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Market Summary */}
