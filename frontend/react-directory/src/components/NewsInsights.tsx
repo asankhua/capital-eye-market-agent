@@ -102,7 +102,13 @@ export const NewsInsights: React.FC = () => {
       </div>
 
       {/* News Grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))', gap: '16px' }}>
+      <div style={{ 
+        display: 'grid', 
+        gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))', 
+        gap: '16px',
+        maxWidth: '100%',
+        overflowX: 'hidden'
+      }}>
         {news.map((item, index) => (
           <motion.div
             key={index}
@@ -117,26 +123,43 @@ export const NewsInsights: React.FC = () => {
               boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
               display: 'flex',
               flexDirection: 'column',
-              gap: '8px'
+              gap: '8px',
+              maxWidth: '100%',
+              overflow: 'hidden'
             }}
           >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-              <span style={{ fontSize: '12px', color: '#9ca3af', display: 'flex', alignItems: 'center', gap: '4px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '8px' }}>
+              <span style={{ fontSize: '12px', color: '#9ca3af', display: 'flex', alignItems: 'center', gap: '4px', flexShrink: 0 }}>
                 <Clock size={12} />
                 {formatDate(item.datetime)}
               </span>
             </div>
             
-            <h3 style={{ fontSize: '16px', fontWeight: 600, color: '#0f172a', lineHeight: 1.4 }}>
+            <h3 style={{ 
+              fontSize: '16px', 
+              fontWeight: 600, 
+              color: '#0f172a', 
+              lineHeight: 1.4,
+              wordBreak: 'break-word',
+              overflowWrap: 'break-word',
+              maxWidth: '100%'
+            }}>
               {item.headline}
             </h3>
             
-            <p style={{ fontSize: '14px', color: '#4b5563', lineHeight: 1.5 }}>
+            <p style={{ 
+              fontSize: '14px', 
+              color: '#4b5563', 
+              lineHeight: 1.5,
+              wordBreak: 'break-word',
+              overflowWrap: 'break-word',
+              maxWidth: '100%'
+            }}>
               {item.summary}
             </p>
             
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 'auto', paddingTop: '8px' }}>
-              <span style={{ fontSize: '12px', color: '#6b7280', fontWeight: 600 }}>
+              <span style={{ fontSize: '12px', color: '#6b7280', fontWeight: 600, wordBreak: 'break-word' }}>
                 Source: {item.source}
               </span>
             </div>
