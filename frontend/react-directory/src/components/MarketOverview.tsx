@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Globe, TrendingUp, TrendingDown, Activity } from 'lucide-react';
+import { Globe, Activity, TrendingUp, TrendingDown } from 'lucide-react';
 import { api } from '../api';
 
 interface IndexData {
@@ -11,19 +11,8 @@ interface IndexData {
   change_percent: number;
 }
 
-interface MoverData {
-  symbol: string;
-  name: string;
-  price: number;
-  change: number;
-  change_percent: number;
-  volume: number;
-}
-
 export const MarketOverview: React.FC = () => {
   const [indices, setIndices] = useState<IndexData[]>([]);
-  const [gainers, setGainers] = useState<MoverData[]>([]);
-  const [losers, setLosers] = useState<MoverData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -36,8 +25,6 @@ export const MarketOverview: React.FC = () => {
     try {
       const data = await api.getTwelveDataMarketOverview();
       setIndices(data.indices || []);
-      setGainers(data.top_gainers || []);
-      setLosers(data.top_losers || []);
     } catch (err) {
       setError('Failed to load market overview');
       console.error(err);
@@ -125,85 +112,6 @@ export const MarketOverview: React.FC = () => {
               </div>
             </motion.div>
           ))}
-        </div>
-      </div>
-
-      {/* Top Gainers & Losers */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
-        {/* Gainers */}
-        <div>
-          <h3 style={{ fontSize: '16px', fontWeight: 600, color: '#059669', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <TrendingUp size={20} />
-            Top Gainers
-          </h3>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            {gainers.slice(0, 5).map((stock, index) => (
-              <motion.div
-                key={stock.symbol}
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: index * 0.1 }}
-                style={{
-                  padding: '12px 16px',
-                  background: '#ffffff',
-                  borderRadius: '8px',
-                  border: '1px solid #e5e7eb',
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center'
-                }}
-              >
-                <div>
-                  <p style={{ fontSize: '14px', fontWeight: 600, color: '#0f172a' }}>{stock.symbol}</p>
-                  <p style={{ fontSize: '12px', color: '#6b7280' }}>{stock.name}</p>
-                </div>
-                <div style={{ textAlign: 'right' }}>
-                  <p style={{ fontSize: '14px', fontWeight: 600, color: '#0f172a' }}>${stock.price?.toFixed(2)}</p>
-                  <p style={{ fontSize: '12px', color: '#059669', fontWeight: 600 }}>
-                    +{stock.change_percent?.toFixed(2)}%
-                  </p>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-
-        {/* Losers */}
-        <div>
-          <h3 style={{ fontSize: '16px', fontWeight: 600, color: '#dc2626', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <TrendingDown size={20} />
-            Top Losers
-          </h3>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            {losers.slice(0, 5).map((stock, index) => (
-              <motion.div
-                key={stock.symbol}
-                initial={{ opacity: 0, x: 10 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: index * 0.1 }}
-                style={{
-                  padding: '12px 16px',
-                  background: '#ffffff',
-                  borderRadius: '8px',
-                  border: '1px solid #e5e7eb',
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center'
-                }}
-              >
-                <div>
-                  <p style={{ fontSize: '14px', fontWeight: 600, color: '#0f172a' }}>{stock.symbol}</p>
-                  <p style={{ fontSize: '12px', color: '#6b7280' }}>{stock.name}</p>
-                </div>
-                <div style={{ textAlign: 'right' }}>
-                  <p style={{ fontSize: '14px', fontWeight: 600, color: '#0f172a' }}>${stock.price?.toFixed(2)}</p>
-                  <p style={{ fontSize: '12px', color: '#dc2626', fontWeight: 600 }}>
-                    {stock.change_percent?.toFixed(2)}%
-                  </p>
-                </div>
-              </motion.div>
-            ))}
-          </div>
         </div>
       </div>
     </div>
