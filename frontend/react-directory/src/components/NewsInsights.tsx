@@ -17,6 +17,7 @@ export const NewsInsights: React.FC = () => {
   const [category, setCategory] = useState('general');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [lastUpdated, setLastUpdated] = useState<string>('');
 
   useEffect(() => {
     loadNews();
@@ -33,6 +34,14 @@ export const NewsInsights: React.FC = () => {
         categoryData = await api.getIndianCategoryNews(category, 10);
       }
       setNews(categoryData.news || []);
+      setLastUpdated(new Date().toLocaleString('en-IN', { 
+        timeZone: 'Asia/Kolkata',
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      }));
     } catch (err) {
       setError('Failed to load news');
       console.error(err);
@@ -94,7 +103,15 @@ export const NewsInsights: React.FC = () => {
     <div style={{ padding: '24px' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px' }}>
         <Newspaper size={28} color="#2563eb" />
-        <h2 style={{ fontSize: '24px', fontWeight: 700, color: '#0f172a' }}>News & Insights</h2>
+        <div style={{ flex: 1 }}>
+          <h2 style={{ fontSize: '24px', fontWeight: 700, color: '#0f172a' }}>News & Insights</h2>
+          {lastUpdated && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '4px', fontSize: '12px', color: '#6b7280' }}>
+              <Clock size={12} />
+              <span>Last updated: {lastUpdated} IST</span>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Category Filter */}

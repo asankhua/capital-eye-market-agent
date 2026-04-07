@@ -89,7 +89,7 @@ class NSEMarketTool:
                 movers = self.nse.get_top_gainers()
             
             result = []
-            for item in movers[:10]:
+            for item in movers[:20]:  # Increased from 10 to 20
                 # Try multiple possible volume field names from nsetools
                 volume = (
                     item.get("tradedQuantity") or 

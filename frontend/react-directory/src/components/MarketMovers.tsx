@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { TrendingUp, TrendingDown, Activity, ArrowUpDown } from 'lucide-react';
+import { TrendingUp, TrendingDown, Activity, ArrowUpDown, Clock } from 'lucide-react';
 import { api } from '../api';
 
 interface Mover {
@@ -19,6 +19,7 @@ export const MarketMovers: React.FC = () => {
   const [type, setType] = useState<MoverType>('gainers');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [lastUpdated, setLastUpdated] = useState<string>('');
 
   useEffect(() => {
     loadMovers();
@@ -27,9 +28,16 @@ export const MarketMovers: React.FC = () => {
   const loadMovers = async () => {
     setLoading(true);
     try {
-      // Use nsetools for Indian market movers instead of Finnhub
       const data = await api.getTwelveDataMarketMovers(type);
       setMovers(data.movers || []);
+      setLastUpdated(new Date().toLocaleString('en-IN', { 
+        timeZone: 'Asia/Kolkata',
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      }));
     } catch (err) {
       setError('Failed to load market movers');
       console.error(err);
@@ -81,7 +89,15 @@ export const MarketMovers: React.FC = () => {
     <div style={{ padding: '24px' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px' }}>
         <ArrowUpDown size={28} color="#2563eb" />
-        <h2 style={{ fontSize: '24px', fontWeight: 700, color: '#0f172a' }}>Market Movers</h2>
+        <div style={{ flex: 1 }}>
+          <h2 style={{ fontSize: '24px', fontWeight: 700, color: '#0f172a' }}>Market Movers</h2>
+          {lastUpdated && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '4px', fontSize: '12px', color: '#6b7280' }}>
+              <Clock size={12} />
+              <span>Last updated: {lastUpdated} IST</span>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Tabs */}
