@@ -68,6 +68,37 @@ export const MarketOverview: React.FC = () => {
     );
   }
 
+  // Define the exact sequence of indices as requested
+  const indexOrder = [
+    "NIFTY 50",
+    "NIFTY MIDCAP 150",
+    "NIFTY SMALLCAP 250",
+    "NIFTY ALPHA 50",
+    "NIFTY MIDCAP150 MOMENTUM 50",
+    "NIFTY50 EQUAL WEIGHT",
+    "NIFTY NEXT 50",
+    "NIFTY INDIA RAILWAYS PSU",
+    "NIFTY BANK",
+    "NIFTY IT",
+    "NIFTY AUTO",
+    "NIFTY PHARMA",
+    "NIFTY FMCG",
+    "NIFTY METAL",
+    "NIFTY REALTY",
+    "NIFTY PSU BANK",
+    "NIFTY COMMODITIES",
+    "INDIA VIX"
+  ];
+
+  // Sort indices based on the defined order
+  const sortedIndices = [...indices].sort((a: IndexData, b: IndexData) => {
+    const indexA = indexOrder.indexOf(a.name);
+    const indexB = indexOrder.indexOf(b.name);
+    if (indexA === -1) return 1;
+    if (indexB === -1) return -1;
+    return indexA - indexB;
+  });
+
   return (
     <div style={{ padding: '24px' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
@@ -93,22 +124,22 @@ export const MarketOverview: React.FC = () => {
         <h3 style={{ fontSize: '16px', fontWeight: 600, color: '#374151', marginBottom: '16px' }}>
           Major Indices
         </h3>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
-          {indices.map((index) => (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '12px' }}>
+          {sortedIndices.map((index) => (
             <motion.div
               key={index.symbol}
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               style={{
-                padding: '16px',
+                padding: '12px',
                 background: '#ffffff',
-                borderRadius: '12px',
+                borderRadius: '10px',
                 border: '1px solid #e5e7eb',
-                boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+                boxShadow: '0 1px 2px rgba(0,0,0,0.1)'
               }}
             >
-              <p style={{ fontSize: '14px', color: '#6b7280', marginBottom: '4px' }}>{index.name}</p>
-              <p style={{ fontSize: '24px', fontWeight: 700, color: '#0f172a' }}>
+              <p style={{ fontSize: '13px', color: '#6b7280', marginBottom: '2px' }}>{index.name}</p>
+              <p style={{ fontSize: '20px', fontWeight: 700, color: '#0f172a' }}>
                 {index.price?.toFixed(2) || 'N/A'}
               </p>
               <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginTop: '4px' }}>
@@ -118,7 +149,7 @@ export const MarketOverview: React.FC = () => {
                   <TrendingDown size={16} color="#dc2626" />
                 )}
                 <span style={{ 
-                  fontSize: '14px', 
+                  fontSize: '13px', 
                   fontWeight: 600,
                   color: index.change >= 0 ? '#059669' : '#dc2626'
                 }}>
