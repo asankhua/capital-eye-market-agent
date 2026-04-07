@@ -35,7 +35,7 @@ export const NewsInsights: React.FC = () => {
         year: 'numeric',
         hour: '2-digit',
         minute: '2-digit'
-      })} IST (from NewsData.io)`);
+      })} IST (from Google News RSS)`);
     } catch (err) {
       setError('Failed to load news');
       console.error(err);

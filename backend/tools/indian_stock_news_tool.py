@@ -138,7 +138,7 @@ class IndianStockNewsTool:
 
     @staticmethod
     async def get_market_news(max_results: int = 10, bypass_cache: bool = False) -> dict[str, Any]:
-        """Fetch Indian stock market news from NewsData.io API."""
+        """Fetch Indian stock market news from Google News RSS."""
         cache_key = "indian_market_news"
         
         # Check cache unless bypass is requested
@@ -152,67 +152,13 @@ class IndianStockNewsTool:
                         if cached.get("news"):
                             return cached
 
-        # Check if API key is available
-        api_key = IndianStockNewsTool.NEWSDATA_API_KEY
-        if not api_key or api_key == "your_newsdata_api_key_here":
-            logger.warning("[IndianStockNews] NewsData.io API key not configured, returning sample data")
-            sample_news = IndianStockNewsTool._get_sample_news(max_results)
-            return {
-                "news": sample_news,
-                "count": len(sample_news),
-                "source": "sample_data",
-                "cached_at": datetime.now().isoformat()
-            }
-
         try:
-            # Build NewsData.io market API request
-            params = {
-                "apikey": api_key,
-                "q": IndianStockNewsTool.DEFAULT_QUERY,
-                "country": "in",
-                "category": "business"
-            }
-            
-            logger.info(f"[IndianStockNews] Fetching news from NewsData.io Market API")
-            response = requests.get(IndianStockNewsTool.NEWSDATA_BASE_URL, params=params, timeout=15)
-            response.raise_for_status()
-            data = response.json()
-            
-            # Check for API errors
-            if data.get("status") != "success":
-                logger.error(f"[IndianStockNews] NewsData.io API error: {data.get('results', {}).get('message', 'Unknown error')}")
-                sample_news = IndianStockNewsTool._get_sample_news(max_results)
-                return {
-                    "news": sample_news,
-                    "count": len(sample_news),
-                    "source": "sample_data",
-                    "cached_at": datetime.now().isoformat()
-                }
-            
-            # Parse NewsData.io response
-            articles = data.get("results", [])
-            news_items = []
-            
-            for article in articles[:max_results]:
-                # Parse publish date
-                pub_date = article.get("pubDate", "")
-                try:
-                    dt = datetime.strptime(pub_date, "%Y-%m-%d %H:%M:%S")
-                    timestamp = int(dt.timestamp())
-                except:
-                    timestamp = int(datetime.now().timestamp())
-                
-                news_items.append({
-                    "headline": article.get("title", ""),
-                    "source": article.get("source_id", "NewsData.io"),
-                    "url": article.get("link", ""),
-                    "datetime": timestamp,
-                    "summary": article.get("description", "")[:200] + "..." if len(article.get("description", "")) > 200 else article.get("description", ""),
-                    "category": article.get("category", ["business"])[0] if article.get("category") else "business"
-                })
+            # Fetch from Google News RSS
+            feed_url = "https://news.google.com/rss/search?q=india+stock+market&hl=en-IN&gl=IN&ceid=IN:en"
+            news = IndianStockNewsTool._parse_rss_feed(feed_url, "Google News", max_items=max_results)
             
             # If no news found, return sample data
-            if len(news_items) == 0:
+            if len(news) == 0:
                 sample_news = IndianStockNewsTool._get_sample_news(max_results)
                 return {
                     "news": sample_news,
@@ -222,9 +168,9 @@ class IndianStockNewsTool:
                 }
             
             result = {
-                "news": news_items,
-                "count": len(news_items),
-                "source": "newsdata.io",
+                "news": news,
+                "count": len(news),
+                "source": "google_news_rss",
                 "cached_at": datetime.now().isoformat()
             }
             
@@ -232,7 +178,7 @@ class IndianStockNewsTool:
             return result
 
         except Exception as e:
-            logger.error(f"[IndianStockNews] Error fetching news from NewsData.io: {e}")
+            logger.error(f"[IndianStockNews] Error fetching news from Google RSS: {e}")
             # Return sample data on error
             sample_news = IndianStockNewsTool._get_sample_news(max_results)
             return {
