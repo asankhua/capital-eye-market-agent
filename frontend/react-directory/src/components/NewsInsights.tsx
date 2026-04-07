@@ -14,25 +14,19 @@ interface NewsItem {
 
 export const NewsInsights: React.FC = () => {
   const [news, setNews] = useState<NewsItem[]>([]);
-  const [category, setCategory] = useState('general');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [lastUpdated, setLastUpdated] = useState<string>('');
 
   useEffect(() => {
     loadNews();
-  }, [category]);
+  }, []);
 
   const loadNews = async () => {
     setLoading(true);
     try {
-      // Load Indian market news based on selected category
-      let categoryData;
-      if (category === 'general') {
-        categoryData = await api.getIndianMarketNews(10);
-      } else {
-        categoryData = await api.getIndianCategoryNews(category, 10);
-      }
+      // Load Indian market news
+      const categoryData = await api.getIndianMarketNews(10);
       setNews(categoryData.news || []);
       setLastUpdated(`${new Date().toLocaleString('en-IN', { 
         timeZone: 'Asia/Kolkata',
@@ -41,7 +35,7 @@ export const NewsInsights: React.FC = () => {
         year: 'numeric',
         hour: '2-digit',
         minute: '2-digit'
-      })} IST (from Indian Market Sources)`);
+      })} IST (from RSS Feed)`);
     } catch (err) {
       setError('Failed to load news');
       console.error(err);
@@ -58,13 +52,6 @@ export const NewsInsights: React.FC = () => {
       minute: '2-digit'
     });
   };
-
-  const categories = [
-    { id: 'general', label: 'General' },
-    { id: 'forex', label: 'Forex' },
-    { id: 'crypto', label: 'Crypto' },
-    { id: 'merger', label: 'M&A' }
-  ];
 
   if (loading) {
     return (
@@ -114,29 +101,6 @@ export const NewsInsights: React.FC = () => {
         </div>
       </div>
 
-      {/* Category Filter */}
-      <div style={{ display: 'flex', gap: '8px', marginBottom: '24px', flexWrap: 'wrap' }}>
-        {categories.map((cat) => (
-          <button
-            key={cat.id}
-            onClick={() => setCategory(cat.id)}
-            style={{
-              padding: '8px 16px',
-              borderRadius: '20px',
-              border: 'none',
-              background: category === cat.id ? '#2563eb' : '#f3f4f6',
-              color: category === cat.id ? '#ffffff' : '#374151',
-              fontSize: '14px',
-              fontWeight: 600,
-              cursor: 'pointer',
-              transition: 'all 0.2s'
-            }}
-          >
-            {cat.label}
-          </button>
-        ))}
-      </div>
-
       {/* News Grid */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))', gap: '16px' }}>
         {news.map((item, index) => (
@@ -157,17 +121,6 @@ export const NewsInsights: React.FC = () => {
             }}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-              <span style={{ 
-                fontSize: '12px', 
-                fontWeight: 600,
-                color: '#2563eb',
-                background: '#eff6ff',
-                padding: '4px 8px',
-                borderRadius: '4px',
-                textTransform: 'uppercase'
-              }}>
-                {item.category}
-              </span>
               <span style={{ fontSize: '12px', color: '#9ca3af', display: 'flex', alignItems: 'center', gap: '4px' }}>
                 <Clock size={12} />
                 {formatDate(item.datetime)}
