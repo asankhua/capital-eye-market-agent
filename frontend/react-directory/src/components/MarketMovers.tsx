@@ -127,8 +127,8 @@ export const MarketMovers: React.FC = () => {
         ))}
       </div>
 
-      {/* Movers List - 4x5 Grid Layout */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px' }}>
+      {/* Movers List - 5x4 Grid Layout (5 columns, 4 rows = 20 stocks) */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '10px' }}>
         {movers.map((mover, index) => (
           <motion.div
             key={mover.symbol}
