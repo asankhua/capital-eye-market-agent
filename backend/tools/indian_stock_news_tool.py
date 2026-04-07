@@ -141,9 +141,8 @@ class IndianStockNewsTool:
 
     @staticmethod
     async def get_market_news(max_results: int = 10, bypass_cache: bool = False) -> dict[str, Any]:
-        """Fetch general Indian stock market news from RSS feeds with filtering."""
+        """Fetch Indian stock market news - use sample data since RSS blocked on HuggingFace."""
         cache_key = "indian_market_news"
-        logger.info(f"[IndianStockNews] Fetching market news from RSS feeds with Indian market filter")
         
         # Check cache unless bypass is requested
         if not bypass_cache:
@@ -153,69 +152,23 @@ class IndianStockNewsTool:
                 if cached_time:
                     cache_dt = datetime.fromisoformat(cached_time)
                     if cache_dt.date() == datetime.now().date():
-                        logger.info(f"[IndianStockNews] Returning cached news from today")
-                        return cached
+                        # Return cached data if it has news
+                        if cached.get("news"):
+                            return cached
 
-        try:
-            # Fetch from all RSS feeds
-            all_news = []
-            for source_name, feed_url in IndianStockNewsTool.RSS_FEEDS.items():
-                news = IndianStockNewsTool._parse_rss_feed(feed_url, source_name, max_items=5)
-                all_news.extend(news)
-            
-            # Sort by datetime (newest first)
-            all_news.sort(key=lambda x: x["datetime"], reverse=True)
-            
-            # If no news after filtering, return sample data
-            if len(all_news) == 0:
-                sample_news = IndianStockNewsTool._get_sample_news(max_results)
-                logger.info(f"[IndianStockNews] No RSS news after filtering, returning sample data")
-                return {
-                    "news": sample_news,
-                    "count": len(sample_news),
-                    "source": "sample_data",
-                    "cached_at": datetime.now().isoformat()
-                }
-            
-            result = {
-                "news": all_news[:max_results],
-                "count": len(all_news[:max_results]),
-                "source": "rss_feeds",
-                "cached_at": datetime.now().isoformat()
-            }
-            logger.info(f"[IndianStockNews] Total filtered news items: {len(all_news)}")
-
-            await SQLiteMCPTool.set_cache("indian_news", cache_key, result, ttl=3600)
-            return result
-
-        except Exception as e:
-            logger.error(f"[IndianStockNews] Error fetching news from RSS: {e}", exc_info=True)
-            # Try to return old cached data if fresh fetch fails
-            try:
-                cached = await SQLiteMCPTool.get_cache("indian_news", cache_key)
-                if cached and cached.get("news"):
-                    logger.info(f"[IndianStockNews] Returning old cache due to fetch error")
-                    return cached
-            except:
-                pass
-            
-            # Return sample data as last resort when RSS fails
-            sample_news = IndianStockNewsTool._get_sample_news(max_results)
-            if sample_news:
-                logger.info(f"[IndianStockNews] Returning sample data due to RSS failure")
-                return {
-                    "news": sample_news,
-                    "count": len(sample_news),
-                    "source": "sample_data",
-                    "cached_at": datetime.now().isoformat()
-                }
-            
-            return {
-                "news": [],
-                "count": 0,
-                "error": str(e),
-                "source": "rss_feeds"
-            }
+        # RSS feeds are blocked on HuggingFace - return sample data directly
+        sample_news = IndianStockNewsTool._get_sample_news(max_results)
+        logger.info(f"[IndianStockNews] RSS blocked on deployed version, returning sample data")
+        
+        result = {
+            "news": sample_news,
+            "count": len(sample_news),
+            "source": "sample_data",
+            "cached_at": datetime.now().isoformat()
+        }
+        
+        await SQLiteMCPTool.set_cache("indian_news", cache_key, result, ttl=3600)
+        return result
 
     @staticmethod
     def _get_sample_news(max_results: int = 10) -> list[dict]:
