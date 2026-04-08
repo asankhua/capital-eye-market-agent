@@ -6340,3 +6340,17 @@ SyntaxError: invalid syntax
 2026-04-07 19:53:04 | INFO     | market_analyst.api.server | Indian market news result: count=3, source=rss_feeds
 2026-04-07 20:19:09 | INFO     | market_analyst | Logger initialised – level=INFO, file=dump.log
 2026-04-07 20:19:09 | WARNING  | market_analyst | [MarketData] nsetools not available for Indian markets
+2026-04-08 06:13:03 | INFO     | market_analyst.api.server | Health check requested
+2026-04-08 06:15:45 | INFO     | market_analyst.api.server | GET /nse/dividends ticker=None
+2026-04-08 06:15:45 | ERROR    | market_analyst.api.server | Error fetching NSE dividends: No module named 'backend.tools.nse_dividend_tool'
+Traceback (most recent call last):
+  File "/Users/asankhua/Trail/market_analyst-main/backend/api/fastapi_server.py", line 522, in nse_dividends
+    }
+ModuleNotFoundError: No module named 'backend.tools.nse_dividend_tool'
+2026-04-08 07:32:59 | INFO     | market_analyst | Logger initialised – level=INFO, file=dump.log
+2026-04-08 07:32:59 | INFO     | market_analyst.models.schemas | Pydantic schemas loaded
+2026-04-08 07:33:00 | WARNING  | market_analyst.tools.sqlite_cache | MCP not available (requires Python 3.10+), using direct SQLite fallback
+2026-04-08 07:33:00 | INFO     | market_analyst.api.server | Frontend dist not found at /app/frontend/dist - API only mode
+2026-04-08 07:33:00 | INFO     | market_analyst.api.server | FastAPI server starting up
+2026-04-08 07:33:00 | INFO     | market_analyst.tools.sqlite_mcp | SQLite schema initialized with new tables (direct connection)
+2026-04-08 07:33:00 | INFO     | market_analyst.tools.sqlite_mcp | Direct SQLite cache initialized at /Users/asankhua/Trail/market_analyst-main/db/market_analysis.db

@@ -319,17 +319,17 @@ async def remove_from_watchlist(ticker: str):
     return {"success": True, "ticker": ticker}
 
 
-# NSE Corporate Actions Dividend endpoint - uses BSE Corporate Actions API
+# NSE Corporate Actions Dividend endpoint - uses Yahoo Finance Dividend Tracker
 @app.get("/nse/dividends")
 async def nse_dividends(ticker: str = None):
-    """Get dividend announcements from BSE Corporate Actions API."""
+    """Get dividend announcements from Yahoo Finance."""
     logger.info(f"GET /nse/dividends ticker={ticker}")
     
     try:
-        from backend.tools.bse_corporate_actions_tool import BSECorporateActionsTool
+        from backend.tools.dividend_tracker_tool import DividendTrackerTool
         
         # Get recent dividends (last 90 days to have more data)
-        result = await BSECorporateActionsTool.get_recent_dividends(90)
+        result = await DividendTrackerTool.get_recent_dividends(90)
         
         # Filter by ticker if specified
         dividends = result.get("dividends", [])
@@ -343,20 +343,20 @@ async def nse_dividends(ticker: str = None):
             announcements.append({
                 "ticker": d.get("symbol", ""),
                 "company_name": d.get("company_name", ""),
-                "dividend_amount": None,  # BSE doesn't provide amount in this API
+                "dividend_amount": d.get("dividend_amount"),
                 "dividend_type": d.get("dividend_type", ""),
                 "ex_dividend_date": d.get("ex_date", ""),
                 "record_date": d.get("record_date", ""),
                 "announcement_date": d.get("announcement_date", ""),
                 "purpose": d.get("purpose", ""),
-                "source": "BSE Corporate Actions"
+                "source": "Yahoo Finance"
             })
         
         return {
             "ticker": ticker.upper().replace('.NS', '').replace('.BO', '') if ticker else "ALL",
             "announcements": announcements,
             "count": len(announcements),
-            "source": "BSE Corporate Actions",
+            "source": "Yahoo Finance",
             "search_date": datetime.now().strftime("%d %B %Y"),
             "error": None
         }
@@ -367,7 +367,7 @@ async def nse_dividends(ticker: str = None):
             "error": str(e),
             "announcements": [],
             "count": 0,
-            "source": "BSE Corporate Actions - Error"
+            "source": "Yahoo Finance - Error"
         }
 
 
@@ -630,17 +630,17 @@ async def indian_category_news(category: str, max_results: int = 10):
 
 @app.get("/dividends/announcements")
 async def dividend_announcements(days_back: int = 30, days_ahead: int = 30):
-    """Get dividend announcements from BSE India - recent and upcoming."""
+    """Get dividend announcements from Yahoo Finance - recent and upcoming."""
     logger.info(f"GET /dividends/announcements - days_back={days_back}, days_ahead={days_ahead}")
     
     try:
-        from backend.tools.bse_corporate_actions_tool import bse_corporate_actions_tool
+        from backend.tools.dividend_tracker_tool import dividend_tracker_tool
         
         # Get recent dividends
-        recent = await bse_corporate_actions_tool.get_recent_dividends(days_back)
+        recent = await dividend_tracker_tool.get_recent_dividends(days_back)
         
-        # Get upcoming dividends
-        upcoming = await bse_corporate_actions_tool.get_upcoming_dividends(days_ahead)
+        # Get upcoming dividends (based on historical patterns)
+        upcoming = await dividend_tracker_tool.get_upcoming_dividends(days_ahead)
         
         return {
             "recent": recent,
