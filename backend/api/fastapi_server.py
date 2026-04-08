@@ -319,55 +319,17 @@ async def remove_from_watchlist(ticker: str):
     return {"success": True, "ticker": ticker}
 
 
-# NSE Corporate Actions Dividend endpoint - uses BSE India API
 @app.get("/nse/dividends")
 async def nse_dividends(ticker: str = None):
-    """Get dividend announcements from BSE India API."""
-    logger.info(f"GET /nse/dividends ticker={ticker}")
-    
-    try:
-        from backend.tools.bse_dividend_api_tool import bse_dividend_api_tool
-        
-        if ticker:
-            # Get dividends for specific ticker
-            result = await bse_dividend_api_tool.get_dividends_by_ticker(ticker)
-        else:
-            # Get all recent dividends from major stocks
-            result = await bse_dividend_api_tool.get_dividend_announcements(days_back=90, days_ahead=30)
-        
-        # Format response to match expected structure
-        dividends = result.get("dividends", [])
-        announcements = []
-        for d in dividends:
-            announcements.append({
-                "ticker": d.get("symbol", ""),
-                "company_name": d.get("company_name", ""),
-                "dividend_amount": d.get("dividend_amount"),
-                "dividend_type": d.get("dividend_type", ""),
-                "ex_dividend_date": d.get("ex_date", ""),
-                "record_date": d.get("record_date", ""),
-                "announcement_date": d.get("announcement_date", ""),
-                "purpose": d.get("purpose", ""),
-                "source": "BSE India API"
-            })
-        
-        return {
-            "ticker": ticker.upper().replace('.NS', '').replace('.BO', '') if ticker else "ALL",
-            "announcements": announcements,
-            "count": len(announcements),
-            "source": "BSE India API",
-            "search_date": datetime.now().strftime("%d %B %Y"),
-            "error": None
-        }
-    except Exception as e:
-        logger.error(f"Error fetching dividends: {e}", exc_info=True)
-        return {
-            "ticker": ticker.upper().replace('.NS', '').replace('.BO', '') if ticker else "ALL",
-            "error": str(e),
-            "announcements": [],
-            "count": 0,
-            "source": "Yahoo Finance - Error"
-        }
+    """Dividend functionality is disabled."""
+    logger.info("GET /nse/dividends called while disabled (ticker=%s)", ticker)
+    return JSONResponse(
+        status_code=410,
+        content={
+            "disabled": True,
+            "message": "Dividend functionality is temporarily disabled.",
+        },
+    )
 
 
 # Historical Analysis endpoint
@@ -629,7 +591,7 @@ async def indian_category_news(category: str, max_results: int = 10):
 
 @app.get("/dividends/announcements")
 async def dividend_announcements(days_back: int = 30, days_ahead: int = 30):
-    """Dividend announcement feature temporarily disabled."""
+    """Dividend functionality is disabled."""
     logger.info(
         "GET /dividends/announcements called while disabled "
         "(days_back=%d, days_ahead=%d)",

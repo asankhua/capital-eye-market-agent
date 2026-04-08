@@ -93,7 +93,6 @@ export const SettingsPage: React.FC = () => {
 
   const clearAllCaches = () => {
     if (confirm('This will clear all cached data. Continue?')) {
-      localStorage.removeItem('capitaleye_dividend_cache');
       localStorage.removeItem('capitaleye_analysis_cache');
       sessionStorage.clear();
       alert('All caches cleared successfully!');
@@ -270,7 +269,7 @@ export const SettingsPage: React.FC = () => {
                   <Trash2 size={20} color="#dc2626" />
                   <span style={{ fontSize: '14px', fontWeight: 600, color: '#dc2626' }}>Clear All Cached Data</span>
                 </div>
-                <p style={{ fontSize: '13px', color: '#7f1d1d', marginBottom: '12px' }}>This will remove all cached dividend data, analysis history, and temporary storage.</p>
+                <p style={{ fontSize: '13px', color: '#7f1d1d', marginBottom: '12px' }}>This will remove analysis history and temporary storage.</p>
                 <button onClick={clearAllCaches} style={{ padding: '8px 16px', background: '#dc2626', color: '#ffffff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <Trash2 size={16} /> Clear Cache
                 </button>
