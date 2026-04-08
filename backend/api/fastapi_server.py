@@ -629,23 +629,53 @@ async def indian_category_news(category: str, max_results: int = 10):
 
 @app.get("/dividends/announcements")
 async def dividend_announcements(days_back: int = 30, days_ahead: int = 30):
-    """Get dividend announcements from Yahoo Finance - recent and upcoming."""
-    logger.info(f"GET /dividends/announcements - days_back={days_back}, days_ahead={days_ahead}")
+    """Get recent and upcoming dividend announcements from BSE India API."""
+    logger.info("GET /dividends/announcements - days_back=%d, days_ahead=%d", days_back, days_ahead)
     
     try:
-        from backend.tools.dividend_tracker_tool import dividend_tracker_tool
-        
-        # Get recent dividends
-        recent = await dividend_tracker_tool.get_recent_dividends(days_back)
-        
-        # Get upcoming dividends (based on historical patterns)
-        upcoming = await dividend_tracker_tool.get_upcoming_dividends(days_ahead)
-        
+        from backend.tools.bse_dividend_api_tool import bse_dividend_api_tool
+
+        # Pull one live dataset from BSE and split by ex-date for UI.
+        live = await bse_dividend_api_tool.get_dividend_announcements(
+            days_back=days_back,
+            days_ahead=days_ahead,
+        )
+        dividends = live.get("dividends", [])
+
+        now = datetime.now()
+        recent_items = []
+        upcoming_items = []
+
+        for item in dividends:
+            ex_date_str = item.get("ex_date", "")
+            if not ex_date_str:
+                continue
+            try:
+                ex_date = datetime.strptime(ex_date_str, "%d-%m-%Y")
+            except ValueError:
+                logger.debug("Skipping dividend row with invalid ex_date=%r", ex_date_str)
+                continue
+
+            if ex_date >= now:
+                upcoming_items.append(item)
+            else:
+                recent_items.append(item)
+
         return {
-            "recent": recent,
-            "upcoming": upcoming,
-            "cached_at": datetime.now().isoformat()
+            "recent": {
+                "dividends": recent_items,
+                "count": len(recent_items),
+                "source": "bse_india_api",
+                "recent_days": days_back,
+            },
+            "upcoming": {
+                "dividends": upcoming_items,
+                "count": len(upcoming_items),
+                "source": "bse_india_api",
+                "upcoming_days": days_ahead,
+            },
+            "cached_at": live.get("cached_at", datetime.now().isoformat()),
         }
     except Exception as e:
-        logger.error(f"Error fetching dividend announcements: %s", e, exc_info=True)
+        logger.error("Error fetching dividend announcements: %s", e, exc_info=True)
         raise HTTPException(status_code=503, detail=f"Failed to fetch dividends: {str(e)}")
