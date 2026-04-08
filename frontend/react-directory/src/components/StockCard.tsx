@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { TrendingUp, TrendingDown, Activity, DollarSign, PieChart, Newspaper } from 'lucide-react';
 import type { StockAnalysis } from '../types';
 import { NewsSection } from './NewsSection';
+import { StockChart } from './StockChart';
 
 interface StockCardProps {
   data: StockAnalysis;
@@ -79,6 +80,12 @@ export const StockCard: React.FC<StockCardProps> = ({ data }) => {
             <PieChart size={20} color="#1e40af" />
             <h3 style={{ fontSize: '16px', fontWeight: 600, color: '#0f172a' }}>Overview</h3>
           </div>
+          
+          {/* Price Chart */}
+          <div style={{ marginBottom: '24px' }}>
+            <StockChart stock={data.stock} technical={data.technical} />
+          </div>
+          
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '20px' }}>
             {/* Fundamental Card */}
             <div style={{

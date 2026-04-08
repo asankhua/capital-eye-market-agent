@@ -63,12 +63,12 @@ export const NewsSection: React.FC<NewsSectionProps> = ({ stock, news: propNews 
     if (propNews && propNews.length > 0) {
       const formattedNews: NewsItem[] = propNews.map((article, idx) => ({
         id: `${stock}-news-${idx}`,
-        title: article.title,
+        title: article.title || article.summary?.substring(0, 60) || 'News article',
         source: article.publisher || 'Yahoo Finance',
         publishedAt: article.publish_time || new Date().toISOString(),
         url: article.link || '#',
         sentiment: 'neutral', // Could analyze sentiment from title
-        summary: article.summary || article.title,
+        summary: article.summary || article.title || 'No summary available',
       }));
       setNews(formattedNews);
       debugLogger.logUiEvent('News loaded from props', { stock, count: formattedNews.length });
