@@ -319,25 +319,24 @@ async def remove_from_watchlist(ticker: str):
     return {"success": True, "ticker": ticker}
 
 
-# NSE Corporate Actions Dividend endpoint - uses Yahoo Finance Dividend Tracker
+# NSE Corporate Actions Dividend endpoint - uses BSE India API
 @app.get("/nse/dividends")
 async def nse_dividends(ticker: str = None):
-    """Get dividend announcements from Yahoo Finance."""
+    """Get dividend announcements from BSE India API."""
     logger.info(f"GET /nse/dividends ticker={ticker}")
     
     try:
-        from backend.tools.dividend_tracker_tool import DividendTrackerTool
+        from backend.tools.bse_dividend_api_tool import bse_dividend_api_tool
         
-        # Get recent dividends (last 90 days to have more data)
-        result = await DividendTrackerTool.get_recent_dividends(90)
-        
-        # Filter by ticker if specified
-        dividends = result.get("dividends", [])
         if ticker:
-            clean_ticker = ticker.upper().replace('.NS', '').replace('.BO', '')
-            dividends = [d for d in dividends if clean_ticker in d.get("symbol", "").upper()]
+            # Get dividends for specific ticker
+            result = await bse_dividend_api_tool.get_dividends_by_ticker(ticker)
+        else:
+            # Get all recent dividends from major stocks
+            result = await bse_dividend_api_tool.get_dividend_announcements(days_back=90, days_ahead=30)
         
         # Format response to match expected structure
+        dividends = result.get("dividends", [])
         announcements = []
         for d in dividends:
             announcements.append({
@@ -349,14 +348,14 @@ async def nse_dividends(ticker: str = None):
                 "record_date": d.get("record_date", ""),
                 "announcement_date": d.get("announcement_date", ""),
                 "purpose": d.get("purpose", ""),
-                "source": "Yahoo Finance"
+                "source": "BSE India API"
             })
         
         return {
             "ticker": ticker.upper().replace('.NS', '').replace('.BO', '') if ticker else "ALL",
             "announcements": announcements,
             "count": len(announcements),
-            "source": "Yahoo Finance",
+            "source": "BSE India API",
             "search_date": datetime.now().strftime("%d %B %Y"),
             "error": None
         }
