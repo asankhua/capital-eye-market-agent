@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Coins, Calendar, Search, Clock } from 'lucide-react';
+import { Coins, Calendar, Search, Clock, Bug } from 'lucide-react';
 import { api } from '../api';
 
 interface DividendAnnouncement {
@@ -21,6 +21,13 @@ export const DividendTracker: React.FC = () => {
   const [error, setError] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [lastUpdated, setLastUpdated] = useState<string>('');
+  const [debugLog, setDebugLog] = useState<string[]>([]);
+  const [showDebug, setShowDebug] = useState(false);
+
+  const addDebug = (msg: string) => {
+    const timestamp = new Date().toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata' });
+    setDebugLog(prev => [`[${timestamp}] ${msg}`, ...prev].slice(0, 50));
+  };
 
   useEffect(() => {
     loadDividends();
@@ -29,12 +36,19 @@ export const DividendTracker: React.FC = () => {
   const loadDividends = async () => {
     setLoading(true);
     setError('');
+    addDebug('Starting dividend fetch...');
     try {
+      addDebug('Calling API: getBSEDividendAnnouncements(30, 30)');
       const data = await api.getBSEDividendAnnouncements(30, 30);
+      addDebug(`API Response received: ${JSON.stringify(data).substring(0, 200)}...`);
+      addDebug(`Recent dividends count: ${data.recent?.dividends?.length || 0}`);
+      addDebug(`Upcoming dividends count: ${data.upcoming?.dividends?.length || 0}`);
+      
       const allDividends = [
         ...(data.recent?.dividends || []),
         ...(data.upcoming?.dividends || [])
       ];
+      addDebug(`Total combined: ${allDividends.length}`);
       
       // Remove duplicates based on symbol + record_date
       const uniqueDividends = allDividends.filter((dividend, index, self) =>
@@ -42,11 +56,13 @@ export const DividendTracker: React.FC = () => {
           d.symbol === dividend.symbol && d.record_date === dividend.record_date
         ))
       );
+      addDebug(`After deduplication: ${uniqueDividends.length}`);
       
       if (uniqueDividends.length > 0) {
         setDividends(uniqueDividends);
       } else {
         setDividends([]);
+        addDebug('WARNING: No dividends found after filtering');
       }
       setLastUpdated(`${new Date().toLocaleString('en-IN', { 
         timeZone: 'Asia/Kolkata',
@@ -56,11 +72,13 @@ export const DividendTracker: React.FC = () => {
         hour: '2-digit',
         minute: '2-digit'
       })} IST (from BSE Corporate Actions)`);
-    } catch (err) {
+    } catch (err: any) {
       setError('Failed to load dividend announcements');
+      addDebug(`ERROR: ${err.message || String(err)}`);
       console.error(err);
     } finally {
       setLoading(false);
+      addDebug('Fetch completed');
     }
   };
 
@@ -286,6 +304,53 @@ export const DividendTracker: React.FC = () => {
           {searchQuery && <p style={{ fontSize: '14px', marginTop: '8px' }}>Try a different search term</p>}
         </div>
       )}
+
+      {/* Debug Panel */}
+      <div style={{ marginTop: '32px', borderTop: '2px dashed #e5e7eb', paddingTop: '16px' }}>
+        <button
+          onClick={() => setShowDebug(!showDebug)}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            padding: '8px 16px',
+            background: '#f3f4f6',
+            border: 'none',
+            borderRadius: '6px',
+            cursor: 'pointer',
+            fontSize: '12px',
+            color: '#6b7280',
+          }}
+        >
+          <Bug size={14} />
+          {showDebug ? 'Hide Debug Log' : 'Show Debug Log'}
+        </button>
+        
+        {showDebug && (
+          <div style={{
+            marginTop: '12px',
+            padding: '12px',
+            background: '#1f2937',
+            borderRadius: '8px',
+            fontFamily: 'monospace',
+            fontSize: '11px',
+            color: '#10b981',
+            maxHeight: '300px',
+            overflowY: 'auto',
+          }}>
+            <div style={{ color: '#6b7280', marginBottom: '8px', borderBottom: '1px solid #374151', paddingBottom: '4px' }}>
+              Debug Log ({debugLog.length} entries)
+            </div>
+            {debugLog.length === 0 ? (
+              <span style={{ color: '#6b7280' }}>No debug messages yet...</span>
+            ) : (
+              debugLog.map((log, i) => (
+                <div key={i} style={{ marginBottom: '4px', wordBreak: 'break-all' }}>{log}</div>
+              ))
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 };
