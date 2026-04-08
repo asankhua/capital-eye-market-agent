@@ -65,15 +65,20 @@ class LLMProvider:
                 messages.append({"role": "system", "content": system_prompt})
             messages.append({"role": "user", "content": prompt})
 
+            logger.info("Calling Groq API with model=%s, prompt_len=%d", GROQ_MODEL, len(prompt))
             response = self._groq_client.chat.completions.create(
                 messages=messages,
                 model=GROQ_MODEL,
                 temperature=0.7,
                 max_tokens=4096,
             )
-            return response.choices[0].message.content
+            content = response.choices[0].message.content
+            logger.info("Groq response received: %d chars", len(content))
+            return content
         except Exception as e:
-            logger.error("Groq generation failed: %s", e)
+            logger.error("Groq generation failed: %s (type: %s)", e, type(e).__name__)
+            logger.error("GROQ_API_KEY set: %s, GROQ_MODEL: %s", 
+                        bool(GROQ_API_KEY), GROQ_MODEL)
             raise
 
     def generate_json(self, prompt: str, system_prompt: Optional[str] = None) -> dict[str, Any]:

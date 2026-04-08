@@ -314,14 +314,38 @@ class YahooFinanceTool:
             
             # Format news
             formatted_news = []
-            for article in news[:5]:
-                formatted_news.append({
-                    "title": article.get("title", ""),
-                    "publisher": article.get("publisher", ""),
-                    "link": article.get("link", ""),
-                    "publish_time": article.get("providerPublishTime", ""),
-                    "summary": article.get("summary", ""),
-                })
+            try:
+                await _rate_limit()  # Rate limit before request
+                stock = yf.Ticker(ticker)
+                news = stock.get_news() or []
+                
+                # Debug: log raw news structure
+                if news:
+                    logger.info("Raw yfinance news for %s: %s", ticker, str(news[0])[:200] if news else "empty")
+                
+                # Format news articles - handle yfinance field names
+                for article in news[:5]:
+                    # yfinance get_news() returns different field names
+                    title = article.get("title") or article.get("content", {}).get("title", "")
+                    publisher = article.get("publisher") or "Yahoo Finance"
+                    link = article.get("link", "")
+                    # Handle both timestamp formats
+                    publish_time = article.get("providerPublishTime") or article.get("published", "")
+                    summary = article.get("summary") or article.get("content", {}).get("summary", "")
+                    
+                    formatted_news.append({
+                        "title": title or "News article",  # Fallback if still empty
+                        "publisher": publisher,
+                        "link": link,
+                        "publish_time": publish_time,
+                        "summary": summary,
+                    })
+                
+                logger.info("Fetched %d news articles for %s (titles: %s)", 
+                           len(formatted_news), ticker, 
+                           [n.get("title", "")[:30] for n in formatted_news])
+            except Exception as e:
+                logger.error("Error fetching news for %s: %s", ticker, e)
             
             # If no real news, use sample data
             if not formatted_news:
@@ -681,18 +705,32 @@ class YahooFinanceTool:
             stock = yf.Ticker(ticker)
             news = stock.get_news() or []
             
-            # Format news articles
+            # Debug: log raw news structure
+            if news:
+                logger.info("Raw yfinance news for %s: %s", ticker, str(news[0])[:200] if news else "empty")
+            
+            # Format news articles - handle yfinance field names
             formatted_news = []
             for article in news[:count]:
+                # yfinance get_news() returns different field names
+                title = article.get("title") or article.get("content", {}).get("title", "")
+                publisher = article.get("publisher") or "Yahoo Finance"
+                link = article.get("link", "")
+                # Handle both timestamp formats
+                publish_time = article.get("providerPublishTime") or article.get("published", "")
+                summary = article.get("summary") or article.get("content", {}).get("summary", "")
+                
                 formatted_news.append({
-                    "title": article.get("title", ""),
-                    "publisher": article.get("publisher", ""),
-                    "link": article.get("link", ""),
-                    "publish_time": article.get("providerPublishTime", ""),
-                    "summary": article.get("summary", ""),
+                    "title": title or "News article",  # Fallback if still empty
+                    "publisher": publisher,
+                    "link": link,
+                    "publish_time": publish_time,
+                    "summary": summary,
                 })
             
-            logger.info("Fetched %d news articles for %s", len(formatted_news), ticker)
+            logger.info("Fetched %d news articles for %s (titles: %s)", 
+                       len(formatted_news), ticker, 
+                       [n.get("title", "")[:30] for n in formatted_news])
             await SQLiteMCPTool.set_cache("yahoo_finance_news", ticker, formatted_news)
             return formatted_news
 
