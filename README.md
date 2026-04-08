@@ -247,20 +247,12 @@ npm run build
 - [docs/case_study.md](docs/case_study.md) - Implementation details and lessons learned
 - [SKILL.md](SKILL.md) - Project patterns and best practices
 
-## Future Roadmap
+## Working Commits
 
-- [ ] Vector database for news memory (ChromaDB)
-- [ ] LLM reasoning chains
-- [ ] Portfolio risk modeling
-- [ ] Backtesting engine
-- [ ] Real-time market alerts
+| Environment | Commit | Status | Notes |
+|-------------|--------|--------|-------|
+| **Production** | `3dca0df` | Latest | Cleanup: Removed unused files, updated docs |
 
-## License
+---
 
-MIT
-
-## Support
-
-- Open an issue on GitHub for bugs/features
-- Check docs/architecture.md for technical details
-- Review docs/case_study.md for implementation info
+*AI Multiple Market Agent - AI-powered stock analysis for Indian markets*
