@@ -113,7 +113,9 @@ async def analyze_fundamental(ticker: str) -> dict[str, Any]:
         return result
 
     except Exception as e:
+        import traceback
         logger.error("LLM call failed for fundamental analysis of %s: %s", ticker, e)
+        logger.error("Traceback: %s", traceback.format_exc())
         return {
             "revenue": ratios.get("revenue", "N/A"),
             "pe_ratio": ratios.get("pe_ratio"),
@@ -122,5 +124,5 @@ async def analyze_fundamental(ticker: str) -> dict[str, Any]:
             "debt": "N/A",
             "profit_margin": str(ratios.get("profit_margin", "N/A")),
             "score": 5.0,
-            "summary": f"LLM analysis failed for {ticker}. Raw data provided.",
+            "summary": f"LLM analysis failed for {ticker}. Error: {str(e)[:50]}",
         }

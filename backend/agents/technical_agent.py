@@ -198,7 +198,9 @@ async def analyze_technical(ticker: str, period: str = "1y") -> dict[str, Any]:
         return result
 
     except Exception as e:
+        import traceback
         logger.error("LLM call failed for technical analysis of %s: %s", ticker, e)
+        logger.error("Traceback: %s", traceback.format_exc())
         return {
             "rsi": indicators.get("rsi"),
             "macd": indicators.get("macd", "unavailable"),
@@ -206,5 +208,5 @@ async def analyze_technical(ticker: str, period: str = "1y") -> dict[str, Any]:
             "ma200": indicators.get("ma200"),
             "trend": indicators.get("trend", "neutral"),
             "score": 5.0,
-            "summary": f"LLM analysis failed for {ticker}. Indicators computed from raw data.",
+            "summary": f"LLM analysis failed for {ticker}. Error: {str(e)[:50]}",
         }

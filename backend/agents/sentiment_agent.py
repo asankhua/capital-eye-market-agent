@@ -103,10 +103,12 @@ async def analyze_sentiment(ticker: str, max_news: int = 10) -> dict[str, Any]:
         return result
 
     except Exception as e:
+        import traceback
         logger.error("LLM call failed for sentiment analysis of %s: %s", ticker, e)
+        logger.error("Traceback: %s", traceback.format_exc())
         return {
             "positive_signals": [],
             "negative_signals": [],
             "score": 5.0,
-            "summary": f"LLM sentiment analysis failed for {ticker}. News was retrieved but not analyzed.",
+            "summary": f"LLM analysis failed for {ticker}. Error: {str(e)[:50]}",
         }
