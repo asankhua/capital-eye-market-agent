@@ -131,13 +131,18 @@ class DividendTrackerTool:
                     logger.debug(f"[DividendTracker] Error fetching {symbol}: {e}")
                     continue
             
+            # If no dividends found from API, use sample data
+            if not dividend_items:
+                logger.warning("[DividendTracker] No dividends from API, using sample data")
+                dividend_items = SAMPLE_DIVIDENDS.copy()
+            
             # Sort by ex_date
             dividend_items.sort(key=lambda x: datetime.strptime(x['ex_date'], '%d-%m-%Y'), reverse=True)
             
             result = {
                 "dividends": dividend_items,
                 "count": len(dividend_items),
-                "source": "yahoo_finance",
+                "source": "yahoo_finance" if dividend_items and dividend_items[0].get("source") != "Sample Data" else "sample_fallback",
                 "cached_at": datetime.now().isoformat()
             }
             
@@ -185,6 +190,65 @@ class DividendTrackerTool:
         result["count"] = len(filtered)
         return result
 
+
+# Sample dividend data for fallback when API returns no recent dividends
+SAMPLE_DIVIDENDS = [
+    {
+        "company_name": "ITC Ltd",
+        "symbol": "ITC",
+        "purpose": "Final Dividend - Rs 7.50 per share",
+        "dividend_type": "final",
+        "record_date": "15-02-2026",
+        "ex_date": "13-02-2026",
+        "announcement_date": "13-02-2026",
+        "dividend_amount": 7.50,
+        "source": "Sample Data"
+    },
+    {
+        "company_name": "Reliance Industries Ltd",
+        "symbol": "RELIANCE",
+        "purpose": "Final Dividend - Rs 10.00 per share",
+        "dividend_type": "final",
+        "record_date": "20-03-2026",
+        "ex_date": "18-03-2026",
+        "announcement_date": "18-03-2026",
+        "dividend_amount": 10.00,
+        "source": "Sample Data"
+    },
+    {
+        "company_name": "Coal India Ltd",
+        "symbol": "COALINDIA",
+        "purpose": "Interim Dividend - Rs 15.00 per share",
+        "dividend_type": "interim",
+        "record_date": "25-02-2026",
+        "ex_date": "23-02-2026",
+        "announcement_date": "23-02-2026",
+        "dividend_amount": 15.00,
+        "source": "Sample Data"
+    },
+    {
+        "company_name": "Oil & Natural Gas Corporation Ltd",
+        "symbol": "ONGC",
+        "purpose": "Final Dividend - Rs 6.00 per share",
+        "dividend_type": "final",
+        "record_date": "10-03-2026",
+        "ex_date": "08-03-2026",
+        "announcement_date": "08-03-2026",
+        "dividend_amount": 6.00,
+        "source": "Sample Data"
+    },
+    {
+        "company_name": "NTPC Ltd",
+        "symbol": "NTPC",
+        "purpose": "Interim Dividend - Rs 3.50 per share",
+        "dividend_type": "interim",
+        "record_date": "05-03-2026",
+        "ex_date": "03-03-2026",
+        "announcement_date": "03-03-2026",
+        "dividend_amount": 3.50,
+        "source": "Sample Data"
+    }
+]
 
 # Global instance
 dividend_tracker_tool = DividendTrackerTool()
