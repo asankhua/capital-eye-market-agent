@@ -7,7 +7,6 @@ import type {
   IntentResponse,
   PortfolioRequest,
   ChatRequest,
-  WatchlistItem,
   HistoricalAnalysisResponse,
 } from './types';
 
@@ -73,19 +72,6 @@ export const api = {
   parseIntent: async (request: ChatRequest): Promise<IntentResponse> => {
     debugLogger.logApiRequest('/parse_intent', request);
     const response = await apiClient.post<IntentResponse>('/parse_intent', request);
-    return response.data;
-  },
-
-  // ── Watchlist API ─────────────────────────────────────────────────
-  getWatchlist: async (): Promise<WatchlistItem[]> => {
-    debugLogger.logApiRequest('/watchlist', {});
-    const response = await apiClient.get<WatchlistItem[]>('/watchlist');
-    return response.data;
-  },
-
-  addToWatchlist: async (ticker: string, notes: string = ''): Promise<{success: boolean; ticker: string}> => {
-    debugLogger.logApiRequest(`/watchlist/${ticker}`, { notes });
-    const response = await apiClient.post(`/watchlist/${ticker}`, null, { params: { notes } });
     return response.data;
   },
 

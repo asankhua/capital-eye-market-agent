@@ -8,7 +8,7 @@ app_file: backend/api/fastapi_server.py
 pinned: false
 ---
 
-# AI Market Analyst
+# AI Multiple Market Agent
 
 ![FastAPI](https://img.shields.io/badge/FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white)
 ![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)
@@ -19,9 +19,46 @@ pinned: false
 
 **AI-powered multi-agent system** for Indian stock market analysis. Uses specialized agents (Fundamental, Technical, Sentiment) orchestrated via LangGraph, with a FastAPI backend and React frontend.
 
-**Category:** AI/Backend Python Project (Category B per [SKILL.md](SKILL.md))  
-**LLM Provider:** Groq (Llama 3.3 70B)  
-**Architecture:** Phase-Based Modular (per SKILL.md)
+## Live Demo
+
+**URL**: https://huggingface.co/spaces/ashishsankhua/capital_eye_market_agent
+
+## Who Is This For?
+
+| User | Benefit |
+|------|---------|
+| **Retail Investors** | Get instant AI-powered analysis without switching between apps |
+| **Traders** | Compare stocks, view market movers, track sectors in one place |
+| **Finance Students** | Learn fundamental, technical, and sentiment analysis concepts |
+| **Financial Advisors** | Quick stock analysis for client recommendations |
+| **Business Professionals** | Stay updated on Indian market news without manual research |
+
+## How It Helps
+
+- **Saves Time** - Single query gives fundamental, technical, and sentiment analysis
+- **No Expert Required** - AI explains everything in plain language
+- **Indian Market Focus** - Built specifically for NSE stocks with INR currency
+- **Always Available** - 24/7 AI assistant for stock queries
+- **Free to Use** - No subscription required, uses Groq's free tier
+
+## Key Features
+
+### Core Capabilities
+- **Natural Language Queries** - Ask "How is Reliance doing?" and get full analysis
+- **Multi-Agent Analysis** - Fundamental, Technical, Sentiment agents work in parallel
+- **Stock Comparison** - Compare multiple stocks side-by-side
+- **Portfolio Analysis** - Analyze your entire stock portfolio
+
+### Market Data
+- **Market Movers** - Top gainers/losers in Indian markets (NSE)
+- **Market Overview** - Real-time Indian market indices (NIFTY, SENSEX)
+- **Sector Analysis** - Performance by sector
+- **News Insights** - Latest Indian stock market news
+
+### Technical Features
+- **Two-Level Caching** - Intent cache (24h) + Graph cache for performance
+- **Fallback Data** - Sample data when APIs fail
+- **Error Handling** - Detailed logging with fallback to default scores
 
 ## Quick Start
 
@@ -50,29 +87,30 @@ npm install
 npm run dev
 ```
 
-## Features
-
-- **Natural Language Queries** — Ask questions like "How is Reliance doing?"
-- **Multi-Agent Analysis** — Fundamental, Technical, Sentiment agents work in parallel
-- **Stock Comparison** — Compare multiple stocks side-by-side
-- **Dividend Tracker** — Real-time dividend announcements and history
-- **Market Movers** — Top gainers/losers in Indian markets
-- **Portfolio Analysis** — Analyze your stock portfolio
-
 ## Technology Stack
 
-### Backend (Category B: FastAPI + LLM)
-- **FastAPI** ≥0.104.0 — REST API framework
-- **Groq** (Llama 3.3 70B) — LLM provider
-- **yfinance** — Yahoo Finance data
-- **LangGraph** — Agent orchestration
-- **SQLite MCP** — Persistent caching
+### Backend
+- **FastAPI >=0.104.0** - REST API framework
+- **Groq (Llama 3.3 70B)** - LLM provider for AI analysis
+- **LangGraph** - Multi-agent orchestration
+- **SQLite MCP** - Persistent caching layer
 
-### Frontend (React 19 + TypeScript + Vite)
-- **React 19** + **TypeScript**
-- **Vite** — Build tool
-- **Framer Motion** — Animations
-- **Lucide React** — Icons
+### Data Sources
+- **Yahoo Finance (yfinance)** - Stock prices, financials, ratios, news
+- **NSE India (nsetools)** - Indian market indices & movers
+- **Google News RSS** - Market news
+
+### Frontend
+- **React 19 + TypeScript** - User interface
+- **Vite** - Build tool
+- **Framer Motion** - UI animations
+- **Lucide React** - Icon library
+
+### External Libraries
+- **yfinance** - Yahoo Finance data
+- **nsetools** - NSE India data
+- **langgraph** - Agent workflow
+- **pydantic** - Data validation
 
 ## Project Structure
 
@@ -96,17 +134,55 @@ market_analyst-main/
 └── requirements.txt
 ```
 
-## API Endpoints
+## Architecture
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/chat` | Full analysis pipeline |
-| POST | `/analyze_stock/{ticker}` | Single stock analysis |
-| POST | `/compare_stocks` | Compare multiple stocks |
-| GET | `/moneycontrol/dividends` | Dividend information |
-| GET | `/moneycontrol/dividends/all` | All recent dividends |
-| GET | `/finnhub/market_movers` | Top gainers/losers |
-| GET | `/health` | Health check |
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│                           FRONTEND (React)                              │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐  ┌───────────────┐  │
+│  │  ChatPanel  │  │ StockCard   │  │ MarketMovers│  │  MarketOverview│ │
+│  │             │  │ +StockChart │  │             │  │                │  │
+│  └─────────────┘  └─────────────┘  └─────────────┘  └───────────────┘  │
+└─────────────────────────────────────────────────────────────────────────┘
+                                    │
+                                    ▼
+┌─────────────────────────────────────────────────────────────────────────┐
+│                         BACKEND (FastAPI)                               │
+│  ┌─────────────────────────────────────────────────────────────────┐   │
+│  │                    LangGraph Workflow                           │   │
+│  │  ┌───────────┐  ┌───────────┐  ┌───────────┐  ┌────────────┐  │   │
+│  │  │ Intent    │  │Fundamental│  │ Technical │  │  Sentiment │  │   │
+│  │  │ Analyzer  │─▶│  Agent    │  │   Agent   │  │   Agent    │  │   │
+│  │  └───────────┘  └───────────┘  └───────────┘  └────────────┘  │   │
+│  │       │               │              │              │          │   │
+│  │       └───────────────┴──────────────┴──────────────┘          │   │
+│  │                              ▼                                  │   │
+│  │                    ┌──────────────┐                            │   │
+│  │                    │ Master Agent │                            │   │
+│  │                    │ (Aggregator) │                            │   │
+│  │                    └──────────────┘                            │   │
+│  └─────────────────────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────────────────┘
+                                    │
+                                    ▼
+┌─────────────────────────────────────────────────────────────────────────┐
+│                           DATA LAYER                                    │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  ┌───────────┐  │
+│  │ Yahoo Finance│  │ NSE India    │  │Google News  │  │  SQLite   │  │
+│  │              │  │ (nsetools)   │  │    RSS      │  │   Cache   │  │
+│  │• Price Data  │  │• Market Index│  │• Market News│  │           │  │
+│  │• Financials  │  │• Movers      │  │             │  │ 24h TTL   │  │
+│  │• News        │  │• Sectors     │  │             │  │           │  │
+│  └──────────────┘  └──────────────┘  └──────────────┘  └───────────┘  │
+└─────────────────────────────────────────────────────────────────────────┘
+```
+
+### Data Flow
+1. **User Query** → Natural language input via React UI
+2. **Intent Parsing** → Extract stocks + analysis type
+3. **Parallel Agents** → Fundamental, Technical, Sentiment run simultaneously
+4. **Aggregation** → Master agent combines results
+5. **Response** → Unified analysis with recommendation
 
 ## Configuration
 
@@ -124,16 +200,14 @@ LOG_LEVEL=INFO
 
 ### Hugging Face Spaces (Recommended)
 
-The project is configured for automatic deployment to Hugging Face Spaces via GitHub Actions.
-
 **Live Instance:** https://huggingface.co/spaces/ashishsankhua/capital_eye_market_agent
 
 **Setup:**
-1. Add `HF_TOKEN` secret in your GitHub repository settings (get from https://huggingface.co/settings/tokens)
+1. Add `HF_TOKEN` secret in GitHub repository settings
 2. Push to `main` branch - GitHub Action auto-syncs to Hugging Face
-3. Configure environment variables in Hugging Face Spaces settings
+3. Configure `GROQ_API_KEY` in Hugging Face Spaces settings
 
-**Local Docker Test:**
+**Local Docker:**
 ```bash
 docker build -t capital-eye .
 docker run -p 7860:7860 -e GROQ_API_KEY=your_key capital-eye
@@ -141,21 +215,52 @@ docker run -p 7860:7860 -e GROQ_API_KEY=your_key capital-eye
 
 ### Manual Deployment
 
-**Backend (Render/Railway/Heroku):**
-- Set environment variables
-- Start command: `python -m uvicorn backend.api.fastapi_server:app --host 0.0.0.0 --port $PORT`
+**Backend:**
+```bash
+python -m uvicorn backend.api.fastapi_server:app --host 0.0.0.0 --port $PORT
+```
 
-**Frontend (Vercel/Netlify):**
-- Build command: `cd frontend/react-directory && npm run build`
-- Output directory: `frontend/react-directory/dist`
-- Set `REACT_APP_API_URL` to your backend URL
+**Frontend:**
+```bash
+cd frontend/react-directory
+npm run build
+# Deploy dist/ to Vercel/Netlify
+```
+
+## Security & Privacy
+
+- **API Keys** - Stored in environment variables, never in code
+- **Caching** - Local SQLite database, no external data sharing
+- **LLM Processing** - Only stock data sent to Groq, no personal data
+- **No Tracking** - No analytics or user data collection
+
+## Browser Compatibility
+
+- **Chrome/Chromium**: 90+
+- **Firefox**: 88+
+- **Safari**: 14+
+- **Edge**: 90+
 
 ## Documentation
 
-- [docs/architecture.md](docs/architecture.md) — System architecture and design
-- [docs/case_study.md](docs/case_study.md) — Implementation details and lessons learned
-- [SKILL.md](SKILL.md) — Project patterns and best practices
+- [docs/architecture.md](docs/architecture.md) - System architecture and design
+- [docs/case_study.md](docs/case_study.md) - Implementation details and lessons learned
+- [SKILL.md](SKILL.md) - Project patterns and best practices
+
+## Future Roadmap
+
+- [ ] Vector database for news memory (ChromaDB)
+- [ ] LLM reasoning chains
+- [ ] Portfolio risk modeling
+- [ ] Backtesting engine
+- [ ] Real-time market alerts
 
 ## License
 
 MIT
+
+## Support
+
+- Open an issue on GitHub for bugs/features
+- Check docs/architecture.md for technical details
+- Review docs/case_study.md for implementation info

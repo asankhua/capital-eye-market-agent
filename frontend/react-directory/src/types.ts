@@ -77,13 +77,7 @@ export interface IntentResponse {
   parsed_query: string;
 }
 
-// ── Advanced Feature Types ─────────────────────────────────────────
-
-export interface WatchlistItem {
-  ticker: string;
-  added_at: number;
-  notes: string;
-}
+// ----- Historical Analysis Response -------------------------------------------
 
 export interface HistoricalAnalysisResponse {
   ticker: string;

@@ -16,7 +16,7 @@ AI Market Analyst is an **AI-powered multi-agent system** for stock market analy
 - **Natural Language Query** → Stock analysis via unified chat interface
 - **Multi-Agent Orchestration** → Fundamental, Technical, Sentiment agents work in parallel
 - **LLM-Powered Analysis** → Uses Groq (Llama 3.3 70B) for structured analysis
-- **Real-Time Data** → Yahoo Finance, Finnhub, DuckDuckGo News integrations
+- **Real-Time Data** → Yahoo Finance, NSE India, Google News RSS integrations
 - **Dividend Tracking** → Real-time dividend announcements and history
 
 ### Example Queries
@@ -36,7 +36,7 @@ AI Market Analyst is an **AI-powered multi-agent system** for stock market analy
 | LLM Provider | Groq (Llama 3.3 70B) | Primary AI analysis |
 | Data Processing | NumPy, Pandas | Financial calculations |
 | Stock Data | yfinance | Yahoo Finance API |
-| News Data | DuckDuckGo Search | News search |
+| News Data | Yahoo Finance API | Stock news |
 | Market Data | Finnhub | Market movers, earnings |
 | Cache | SQLite MCP | Persistent caching |
 | Orchestration | LangGraph | Agent workflow |
@@ -79,7 +79,7 @@ market_analyst_main/
 ### Phase Breakdown (per SKILL.md)
 | Phase | Component | Status |
 |-------|-----------|--------|
-| Phase 1 | Data Acquisition (Yahoo Finance, Finnhub, DuckDuckGo) | ✅ Complete |
+| Phase 1 | Data Acquisition (Yahoo Finance, NSE India, Google News RSS) | ✅ Complete |
 | Phase 2 | Processing (SQLite cache, data transformation) | ✅ Complete |
 | Phase 3 | AI Layer (Agents, LLM integration, LangGraph) | ✅ Complete |
 | Phase 4 | Backend API (FastAPI endpoints) | ✅ Complete |
@@ -133,8 +133,8 @@ market_analyst_main/
        ▼                 ▼                  ▼
 
 ┌──────────────┐ ┌──────────────┐ ┌──────────────────┐
-│ Yahoo Finance│ │ Yahoo Finance│ │ DuckDuckGo       │
-│ Financials   │ │ Price Data   │ │ News Search      │
+│ Yahoo Finance│ │ Yahoo Finance│ │ Yahoo Finance    │
+│ Financials   │ │ Price Data   │ │ News (via yf)    │
 └──────────────┘ └──────────────┘ └──────────────────┘
 
 
@@ -388,7 +388,7 @@ Trend rules:
 
 Goal: Understand **market sentiment** from recent news.
 
-Sources: DuckDuckGo news search (up to 10 articles).
+Sources: Yahoo Finance news API (up to 10 articles).
 
 Output:
 
@@ -442,20 +442,23 @@ Agents interact with data tools. All tools use **SQLite MCP caching**.
 
 ## 5.1 Yahoo Finance Tool (`backend/tools/yahoo_finance_tool.py`)
 
-Static methods with async caching:
+Primary stock data source with async caching:
 
-* `get_price_history(ticker, period)` — OHLCV data (cache: indefinite)
-* `get_financial_statements(ticker)` — income, balance sheet, cash flow (cache: indefinite)
-* `get_key_ratios(ticker)` — PE, market cap, margins, debt (cache: indefinite)
+* `get_price_history(ticker, period)` - OHLCV data (cache: 1 hour)
+* `get_financial_statements(ticker)` - income, balance sheet, cash flow (cache: 1 hour)
+* `get_key_ratios(ticker)` - PE, market cap, margins, debt (cache: 1 hour)
+* `get_news(ticker, count)` - News articles via yfinance API (cache: 1 hour)
+* `get_all_stock_data(ticker, period)` - Combined data in single call
 
 ---
 
-## 5.2 DuckDuckGo Tool (`backend/tools/duckduckgo_tool.py`)
+## 5.2 Indian Stock News Tool (`backend/tools/indian_stock_news_tool.py`)
 
-Static methods with rate limiting (1s between requests):
+Fetches Indian stock market news using Google News RSS feed:
 
-* `search_news(query, max_results)` — recent news (cache: 1 hour)
-* `search_web(query, max_results)` — web results (cache: 1 hour)
+* `get_market_news(max_results)` - Indian market news (cache: 1 hour)
+* `get_company_news(symbol, max_results)` - Company-specific news
+* `get_category_news(category, max_results)` - Category-based news
 
 ---
 
@@ -487,7 +490,7 @@ Tool names and their cache TTLs:
 | `yahoo_finance_history` | `{ticker}_{period}` | Indefinite |
 | `yahoo_finance_financials` | `{ticker}` | Indefinite |
 | `yahoo_finance_ratios` | `{ticker}` | Indefinite |
-| `duckduckgo` | `news_{max}_{query}` | 1 hour |
+| `yahoo_finance_news` | `{ticker}` | 1 hour |
 
 ---
 
@@ -509,7 +512,7 @@ Level 2: Graph Cache (24h TTL)
     │
     ├── HIT  → return cached full result (skip all agents)
     ├── MISS → run full LangGraph pipeline
-    │           ├── Tool-level caches (Yahoo Finance, DuckDuckGo)
+    │           ├── Tool-level caches (Yahoo Finance only)
     │           └── Store result in graph cache
     │
     ▼
@@ -569,8 +572,9 @@ market-analyst-ai/
 │   │   └── master_agent.py         # Final recommendation aggregator
 │   │
 │   ├── tools/
-│   │   ├── yahoo_finance_tool.py   # Stock data (cached)
-│   │   ├── duckduckgo_tool.py      # News search (cached, rate-limited)
+│   │   ├── yahoo_finance_tool.py   # Stock data + news (cached)
+│   │   ├── nse_market_tool.py      # NSE Indian market data
+│   │   ├── indian_stock_news_tool.py # Google News RSS
 │   │   └── sqlite_mcp_tool.py      # SQLite MCP cache layer
 │   │
 │   ├── workflows/
@@ -607,7 +611,7 @@ market-analyst-ai/
 │   ├── test_sentiment_agent.py
 │   ├── test_master_agent.py
 │   ├── test_yahoo_finance.py
-│   ├── test_duckduckgo.py
+│   ├── test_indian_stock_news.py
 │   ├── test_sqlite_mcp.py
 │   ├── test_state.py
 │   └── test_schemas.py
@@ -709,7 +713,7 @@ Logging:
 
 # 12. Testing Strategy
 
-* **All external API calls are mocked** (Gemini, Yahoo Finance, DuckDuckGo) — per `docs/rules.md`
+* **All external API calls are mocked** (Groq, Yahoo Finance, NSE) — per `docs/rules.md`
 * Backend: 12 pytest test files covering every layer
 * React: 3 Vitest test files (integration, API mocking, error handling)
 * FastAPI: TestClient-based endpoint tests
@@ -721,41 +725,46 @@ Logging:
 
 ## April 2026 Updates
 
-### 14.1 Dividend Tracker Enhancement
-- **New Endpoint:** `GET /moneycontrol/dividends/all` — Returns all recent dividend announcements
-- **Data Source:** Finnhub real-time stock data + sample dividend data
-- **API:** Uses Finnhub (60 calls/min free tier) for current stock prices
-- **UI Update:** DividendTracker component now shows list of recent dividends on load
+### 14.1 Dividend Tracker Changes
+- **Status:** Dividend functionality temporarily disabled
+- **Removed:** `/nse/dividends` and `/dividends/announcements` endpoints (return 410 Gone)
+- **Reason:** BSE India API integration issues - no reliable free API for Indian dividend data
+- **Future:** Can be re-enabled when a reliable data source is identified
 
-### 14.2 Market Movers Fix
-- **Currency:** Changed from `$` to `₹` for Indian market context
-- **Data:** Using Finnhub dummy data with Indian stock values
+### 14.2 Dashboard UI Updates
+- **Removed:** "Latest News" section from Dashboard (per user request)
+- **Added:** StockChart component to StockCard for price visualization
+- **Components:** NewsSection still available in StockCard but not displayed in Dashboard
 
-### 14.3 LLM Provider Migration
-- **Removed:** Gemini API references completely removed
-- **Current:** Groq (Llama 3.3 70B) only
-- **Environment:** `GROQ_API_KEY` and `GROQ_MODEL` in `.env`
+### 14.3 LLM Analysis Debugging
+- **Issue:** "LLM analysis failed" messages appearing in Fundamental, Technical, Sentiment sections
+- **Debug:** Added detailed error logging with tracebacks in:
+  - `backend/llm_provider.py` - logs GROQ_API_KEY status
+  - `backend/agents/fundamental_agent.py` - logs LLM call failures
+  - `backend/agents/technical_agent.py` - logs technical analysis failures
+  - `backend/agents/sentiment_agent.py` - logs sentiment analysis failures
+- **Fallback:** All agents return score 5.0 with raw data when LLM fails
 
-### 14.4 DuckDuckGo Tool Fix
-- **Issue:** DDGS library compatibility with `proxies` parameter
-- **Fix:** Instantiated DDGS without explicit proxies parameter
+### 14.4 News Data Source Migration
+- **Changed:** From DuckDuckGo to Yahoo Finance `get_news()` API
+- **File:** `backend/tools/yahoo_finance_tool.py` - news fetching with rate limiting
+- **Fallback:** Sample news data for major Indian stocks when API fails
 
-### 14.5 Data Source Updates
-- **Removed:** MarketStack integration (replaced with Finnhub)
-- **Dividend Data:** Now uses Finnhub for real-time prices + sample dividend rates
-- **Benefits:** Better rate limits (60/min vs 1,000/month), more reliable for Indian stocks
+### 14.5 Market Data Tools
+- **NSE Market Tool:** `backend/tools/nse_market_tool.py` - Indian market data from nsetools
+- **Indian News Tool:** `backend/tools/indian_stock_news_tool.py` - Google News RSS feed
+- **Yahoo Finance Tool:** `backend/tools/yahoo_finance_tool.py` - Stock data (primary)
+- **SQLite Cache:** `backend/tools/sqlite_mcp_tool.py` - Caching layer (used by all tools)
 
-### 14.6 News Display Fix
-- **Issue:** Yahoo Finance `get_news()` API changed (removed `count` parameter)
-- **Fix:** Updated to call `get_news()` without parameters
-- **Fallback:** Added `get_sample_news()` function with sample news for 7 major Indian stocks (HDFC, HDFCBANK, RELIANCE, TCS, ITC, INFY, HINDUNILVR)
-- **Result:** News now displays for stocks even when Yahoo API is rate-limited
+### 14.6 Frontend Components
+- **Active Components:** Header, Footer, Sidebar, ChatPanel, MarketOverview, MarketMovers, NewsInsights, SectorAnalysis, SettingsPage, StockCard, StockChart, DebugPanel, NewsSection
+- **Removed:** DividendTracker, FeaturesPanel, Watchlist (not used in current UI)
+- **StockCard:** Now includes StockChart for price visualization
 
-### 14.7 Hugging Face Deployment Setup
-- **GitHub Action:** Created `.github/workflows/sync-to-huggingface.yml` for auto-sync
+### 14.7 Hugging Face Deployment
+- **GitHub Action:** `.github/workflows/sync-to-huggingface.yml` for auto-sync to Hugging Face
 - **Dockerfile:** Multi-stage build optimized for HF Spaces (port 7860)
-- **Requirements:** Added `requirements-hf.txt` for HF-specific dependencies
-- **Configuration:** Ready for deployment to https://huggingface.co/spaces/ashishsankhua/capital_eye_market_agent
+- **Live URL:** https://huggingface.co/spaces/ashishsankhua/capital_eye_market_agent
 
 ---
 

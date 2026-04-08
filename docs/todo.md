@@ -39,21 +39,19 @@ Comprehensive task breakdown derived from [architecture.md](./architecture.md).
   - [x] Fetch stock price history (configurable period)
   - [x] Fetch financial statements (income, balance sheet, cash flow)
   - [x] Fetch key ratios (PE, market cap, profit margin, debt)
+  - [x] Fetch news via yfinance API (replaced DuckDuckGo)
   - [x] Error handling for invalid tickers
-  - [x] SQLite MCP caching (indefinite TTL)
-- [x] **P2-2** Implement `backend/tools/duckduckgo_tool.py`
-  - [x] News search for a given stock/company
-  - [x] Web search
-  - [x] Return structured results (title, snippet, url, date)
-  - [x] Rate limiting (1s between requests)
   - [x] SQLite MCP caching (1 hour TTL)
-- [x] **P2-3** Implement `backend/tools/sqlite_mcp_tool.py`
+- [x] **P2-2** ~~Implement `backend/tools/duckduckgo_tool.py`~~ - REMOVED (using Yahoo Finance instead)
+- [x] **P2-3** Implement `backend/tools/nse_market_tool.py` (NSE India data via nsetools)
+- [x] **P2-4** Implement `backend/tools/indian_stock_news_tool.py` (Google News RSS)
+- [x] **P2-5** Implement `backend/tools/sqlite_mcp_tool.py`
   - [x] MCP client wrapper for SQLite caching
   - [x] `api_cache` table with tool_name, cache_key, response_data, created_at
   - [x] `get_cache()` with configurable max_age
   - [x] `set_cache()` with INSERT OR UPDATE
   - [x] Async lifecycle (initialize / shutdown)
-- [x] **P2-4** Write unit tests for tools (mock external API calls) — `tests/test_yahoo_finance.py`, `tests/test_duckduckgo.py`, `tests/test_sqlite_mcp.py`
+- [x] **P2-6** Write unit tests for tools (mock external API calls) - `tests/test_yahoo_finance.py`, `tests/test_sqlite_mcp.py`
 
 ---
 
@@ -86,10 +84,10 @@ Comprehensive task breakdown derived from [architecture.md](./architecture.md).
 ### 3D — Sentiment Analyst Agent
 - [x] **P3D-1** Create `backend/agents/sentiment_agent.py`
 - [x] **P3D-2** Implement LLM prompt for sentiment classification of news articles
-- [x] **P3D-3** Wire up DuckDuckGo news search tool
-- [x] **P3D-4** Return structured output with sentiment score (0–10) + positive/negative signals
+- [x] **P3D-3** Wire up Yahoo Finance news tool (replaced DuckDuckGo)
+- [x] **P3D-4** Return structured output with sentiment score (0-10) + positive/negative signals
 - [x] **P3D-5** Fallback: neutral (score 5.0, empty signals) on no news
-- [x] **P3D-6** Unit tests with mocked LLM + mocked search results — `tests/test_sentiment_agent.py`
+- [x] **P3D-6** Unit tests with mocked LLM + mocked search results - `tests/test_sentiment_agent.py`
 
 ### 3E — Master Analyst (Aggregator) Agent
 - [x] **P3E-1** Create `backend/agents/master_agent.py`
@@ -176,11 +174,12 @@ Comprehensive task breakdown derived from [architecture.md](./architecture.md).
 
 ## Phase 8 · DevOps & Documentation
 - [x] **P8-1** Add `Makefile` with common commands (install, dev, test, lint, docker-build)
-- [ ] **P8-2** Create `Dockerfile` for backend
+- [x] **P8-2** Create `Dockerfile` for Hugging Face Spaces deployment
 - [ ] **P8-3** Create `docker-compose.yml` (backend + Streamlit + React services)
 - [x] **P8-4** Update architecture.md with full system documentation
 - [x] **P8-5** API documentation (auto-gen via FastAPI /docs)
-- [ ] **P8-6** Update `README.md` with full setup, usage, and architecture overview
+- [x] **P8-6** Hugging Face Spaces deployment (auto-sync via GitHub Action)
+- [ ] **P8-7** Update `README.md` with full setup, usage, and architecture overview
 
 ---
 
@@ -190,6 +189,22 @@ Comprehensive task breakdown derived from [architecture.md](./architecture.md).
 - [ ] **P9-3** Event-driven updates (real-time market triggers)
 - [ ] **P9-4** Portfolio risk modeling
 - [ ] **P9-5** Backtesting engine
+
+---
+
+## Recent Changes (April 2026)
+
+### Dividend Feature
+- **Status:** Temporarily disabled (no reliable free API for Indian dividend data)
+- Dividend endpoints return 410 Gone
+
+### Data Source Changes
+- Removed DuckDuckGo - now using Yahoo Finance for news
+- Added NSE India tool (nsetools)
+- Added Indian Stock News tool (Google News RSS)
+
+### LLM Provider
+- Migrated from Gemini to Groq (Llama 3.3 70B) exclusively
 
 ---
 
