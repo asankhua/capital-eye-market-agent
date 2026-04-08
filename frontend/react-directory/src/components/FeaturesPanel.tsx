@@ -1,14 +1,12 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  Star, Coins, X, ChevronRight 
+  Star, X, ChevronRight 
 } from 'lucide-react';
 import { Watchlist } from './Watchlist';
-import { DividendTracker } from './DividendTracker';
 
 const features = [
   { id: 'watchlist', label: 'Watchlist', icon: Star, color: '#fbbf24', component: Watchlist },
-  { id: 'dividend', label: 'Dividends', icon: Coins, color: '#10b981', component: DividendTracker },
 ];
 
 export const FeaturesPanel: React.FC = () => {

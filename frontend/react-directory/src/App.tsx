@@ -7,7 +7,6 @@ import { MarketOverview } from './components/MarketOverview';
 import { MarketMovers } from './components/MarketMovers';
 import { NewsInsights } from './components/NewsInsights';
 import { SectorAnalysis } from './components/SectorAnalysis';
-import { DividendTracker } from './components/DividendTracker';
 import { SettingsPage } from './components/SettingsPage';
 
 const STORAGE_KEY = 'capitaleye_settings';
@@ -115,8 +114,6 @@ function App() {
         return <NewsInsights />;
       case 'sector':
         return <SectorAnalysis />;
-      case 'dividends':
-        return <DividendTracker />;
       case 'settings':
         return <SettingsPage />;
       default:

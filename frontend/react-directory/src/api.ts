@@ -122,10 +122,4 @@ export const api = {
     return response.data;
   },
 
-  // ── BSE Dividend Announcements API ─────────────────────────────────
-  getBSEDividendAnnouncements: async (days_back: number = 30, days_ahead: number = 30): Promise<{recent: any, upcoming: any, cached_at: string}> => {
-    debugLogger.logApiRequest('/dividends/announcements', { days_back, days_ahead });
-    const response = await apiClient.get('/dividends/announcements', { params: { days_back, days_ahead } });
-    return response.data;
-  },
 };

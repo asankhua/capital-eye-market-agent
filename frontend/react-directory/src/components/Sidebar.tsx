@@ -6,13 +6,11 @@ import {
   PieChart,
   ChevronRight,
   Globe,
-  Coins,
   Menu,
 } from 'lucide-react';
 
 const mainNavItems = [
   { id: 'dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-  { id: 'dividends', icon: Coins, label: 'Dividend' },
 ];
 
 const marketNavItems = [
@@ -198,7 +196,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange }) =>
             }}>
               <li>Search stocks like "RELIANCE" or "TCS"</li>
               <li>Ask "Compare RELIANCE vs TCS"</li>
-              <li>Use Dividend Tracker for payouts</li>
               <li>Check Market Movers for trends</li>
             </ul>
           </div>
