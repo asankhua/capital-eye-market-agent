@@ -1,8 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { TrendingUp, TrendingDown, Activity, DollarSign, PieChart, Newspaper } from 'lucide-react';
+import { TrendingUp, TrendingDown, Activity, DollarSign, PieChart } from 'lucide-react';
 import type { StockAnalysis } from '../types';
-import { NewsSection } from './NewsSection';
 import { StockChart } from './StockChart';
 
 interface StockCardProps {
@@ -189,16 +188,6 @@ export const StockCard: React.FC<StockCardProps> = ({ data }) => {
           </div>
         </section>
 
-        {/* News Section */}
-        <section>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
-            <Newspaper size={20} color="#1e40af" />
-            <h3 style={{ fontSize: '16px', fontWeight: 600, color: '#0f172a' }}>News</h3>
-          </div>
-          <div style={{ padding: '16px', background: '#f8fafc', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
-            <NewsSection stock={data.stock} news={data.news} />
-          </div>
-        </section>
       </div>
     </motion.div>
   );
