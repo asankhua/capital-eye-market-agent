@@ -629,53 +629,135 @@ async def indian_category_news(category: str, max_results: int = 10):
 
 @app.get("/dividends/announcements")
 async def dividend_announcements(days_back: int = 30, days_ahead: int = 30):
-    """Get recent and upcoming dividend announcements from BSE India API."""
+    """Get recent and upcoming dividends from dual live BSE sources."""
     logger.info("GET /dividends/announcements - days_back=%d, days_ahead=%d", days_back, days_ahead)
-    
-    try:
-        from backend.tools.bse_dividend_api_tool import bse_dividend_api_tool
 
-        # Pull one live dataset from BSE and split by ex-date for UI.
-        live = await bse_dividend_api_tool.get_dividend_announcements(
+    from backend.tools.bse_dividend_api_tool import bse_dividend_api_tool
+    from backend.tools.bse_corporate_actions_tool import bse_corporate_actions_tool
+
+    primary_items: list[dict] = []
+    secondary_items: list[dict] = []
+    primary_error = None
+    secondary_error = None
+    source_status = {
+        "primary_bse_package": {"status": "error", "count": 0},
+        "secondary_bse_http": {"status": "error", "count": 0},
+    }
+
+    try:
+        primary = await bse_dividend_api_tool.get_dividend_announcements(
             days_back=days_back,
             days_ahead=days_ahead,
         )
-        dividends = live.get("dividends", [])
-
-        now = datetime.now()
-        recent_items = []
-        upcoming_items = []
-
-        for item in dividends:
-            ex_date_str = item.get("ex_date", "")
-            if not ex_date_str:
-                continue
-            try:
-                ex_date = datetime.strptime(ex_date_str, "%d-%m-%Y")
-            except ValueError:
-                logger.debug("Skipping dividend row with invalid ex_date=%r", ex_date_str)
-                continue
-
-            if ex_date >= now:
-                upcoming_items.append(item)
-            else:
-                recent_items.append(item)
-
-        return {
-            "recent": {
-                "dividends": recent_items,
-                "count": len(recent_items),
-                "source": "bse_india_api",
-                "recent_days": days_back,
-            },
-            "upcoming": {
-                "dividends": upcoming_items,
-                "count": len(upcoming_items),
-                "source": "bse_india_api",
-                "upcoming_days": days_ahead,
-            },
-            "cached_at": live.get("cached_at", datetime.now().isoformat()),
+        primary_items = primary.get("dividends", [])
+        source_status["primary_bse_package"] = {
+            "status": "ok" if primary_items else "empty",
+            "count": len(primary_items),
+            "error": primary.get("error"),
         }
     except Exception as e:
-        logger.error("Error fetching dividend announcements: %s", e, exc_info=True)
-        raise HTTPException(status_code=503, detail=f"Failed to fetch dividends: {str(e)}")
+        primary_error = str(e)
+        source_status["primary_bse_package"] = {
+            "status": "error",
+            "count": 0,
+            "error": primary_error,
+        }
+        logger.error("Primary BSE source failed: %s", e, exc_info=True)
+
+    try:
+        # Secondary source already supports date-window filtering.
+        secondary = await bse_corporate_actions_tool.get_dividend_announcements(
+            from_date=(datetime.now() - timedelta(days=days_back)).strftime("%d-%m-%Y"),
+            to_date=(datetime.now() + timedelta(days=days_ahead)).strftime("%d-%m-%Y"),
+        )
+        secondary_items = secondary.get("dividends", [])
+        secondary_diag = secondary.get("diagnostics", {})
+        source_status["secondary_bse_http"] = {
+            "status": secondary_diag.get("status", "ok" if secondary_items else "empty"),
+            "count": len(secondary_items),
+            "error": secondary.get("error"),
+            "diagnostics": secondary_diag,
+        }
+        # Tag secondary rows clearly for observability.
+        for item in secondary_items:
+            if not item.get("source"):
+                item["source"] = "BSE Corporate Actions API"
+    except Exception as e:
+        secondary_error = str(e)
+        source_status["secondary_bse_http"] = {
+            "status": "error",
+            "count": 0,
+            "error": secondary_error,
+        }
+        logger.error("Secondary BSE source failed: %s", e, exc_info=True)
+
+    merged_map: dict[tuple[str, str, str], dict] = {}
+    for item in primary_items + secondary_items:
+        symbol = str(item.get("symbol", "")).strip().upper()
+        ex_date = str(item.get("ex_date", "")).strip()
+        purpose = str(item.get("purpose", "")).strip().upper()
+        if not ex_date:
+            continue
+        key = (symbol, ex_date, purpose)
+        if key not in merged_map:
+            merged_map[key] = item
+
+    merged_items = list(merged_map.values())
+    if not merged_items:
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                "No live dividend data available from both BSE sources. "
+                f"primary_error={primary_error}, secondary_error={secondary_error}, "
+                f"source_status={source_status}"
+            ),
+        )
+
+    # Sort newest first where date parse succeeds.
+    def _safe_ex_date(value: str) -> datetime:
+        try:
+            return datetime.strptime(value, "%d-%m-%Y")
+        except (TypeError, ValueError):
+            return datetime.min
+
+    merged_items.sort(
+        key=lambda x: _safe_ex_date(x.get("ex_date", "")),
+        reverse=True,
+    )
+
+    now = datetime.now()
+    recent_items = []
+    upcoming_items = []
+
+    for item in merged_items:
+        ex_date_str = item.get("ex_date", "")
+        try:
+            ex_date = datetime.strptime(ex_date_str, "%d-%m-%Y")
+        except ValueError:
+            continue
+
+        if ex_date >= now:
+            upcoming_items.append(item)
+        else:
+            recent_items.append(item)
+
+    return {
+        "recent": {
+            "dividends": recent_items,
+            "count": len(recent_items),
+            "source": "bse_dual_live",
+            "recent_days": days_back,
+        },
+        "upcoming": {
+            "dividends": upcoming_items,
+            "count": len(upcoming_items),
+            "source": "bse_dual_live",
+            "upcoming_days": days_ahead,
+        },
+        "cached_at": datetime.now().isoformat(),
+        "sources_used": {
+            "primary_count": len(primary_items),
+            "secondary_count": len(secondary_items),
+        },
+        "source_status": source_status,
+    }

@@ -8,6 +8,7 @@ Provides:
 """
 
 import logging
+import json
 from datetime import datetime, timedelta
 from typing import Any
 import requests
@@ -21,6 +22,48 @@ class BSECorporateActionsTool:
     """Tool for fetching corporate actions and dividend announcements from BSE India."""
 
     BSE_CORPORATE_ACTIONS_URL = "https://api.bseindia.com/BseIndiaAPI/api/CorporateAction/w"
+    BSE_HOME_URL = "https://www.bseindia.com/"
+
+    @staticmethod
+    def _build_headers(referer: str | None = None) -> dict[str, str]:
+        headers = {
+            "User-Agent": (
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                "AppleWebKit/537.36 (KHTML, like Gecko) "
+                "Chrome/124.0.0.0 Safari/537.36"
+            ),
+            "Accept": "application/json, text/plain, */*",
+            "Accept-Language": "en-US,en;q=0.9",
+            "Connection": "keep-alive",
+            "Origin": "https://www.bseindia.com",
+            "Referer": referer or BSECorporateActionsTool.BSE_HOME_URL,
+        }
+        return headers
+
+    @staticmethod
+    def _parse_response_json(response: requests.Response) -> tuple[Any, dict[str, Any]]:
+        content_type = response.headers.get("Content-Type", "")
+        text = response.text or ""
+        snippet = text[:240].replace("\n", " ").strip()
+        diagnostics: dict[str, Any] = {
+            "status_code": response.status_code,
+            "content_type": content_type,
+            "response_snippet": snippet,
+        }
+
+        # Best effort parse with validation and diagnostics.
+        if "json" in content_type.lower():
+            try:
+                return response.json(), diagnostics
+            except Exception as e:
+                diagnostics["parse_error"] = f"json_content_type_parse_failed: {e}"
+                return None, diagnostics
+
+        try:
+            return json.loads(text), diagnostics
+        except Exception as e:
+            diagnostics["parse_error"] = f"non_json_content_type_parse_failed: {e}"
+            return None, diagnostics
 
     @staticmethod
     async def get_dividend_announcements(from_date: str = None, to_date: str = None) -> dict[str, Any]:
@@ -50,27 +93,82 @@ class BSECorporateActionsTool:
         if not from_date:
             from_date = (datetime.now() - timedelta(days=30)).strftime("%d-%m-%Y")
 
+        diagnostics: dict[str, Any] = {
+            "source": "bse_corporate_actions_api",
+            "attempts": 0,
+            "status": "error",
+        }
+
         try:
             params = {
                 "fromDate": from_date,
                 "toDate": to_date
             }
-            
-            headers = {
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-                "Accept": "application/json"
-            }
-            
+
             logger.info(f"[BSECorporateActions] Fetching dividends from {from_date} to {to_date}")
-            response = requests.get(
-                BSECorporateActionsTool.BSE_CORPORATE_ACTIONS_URL,
-                params=params,
-                headers=headers,
-                timeout=15
-            )
-            response.raise_for_status()
-            
-            data = response.json()
+            session = requests.Session()
+            data = None
+            last_error = None
+            last_parse_diag: dict[str, Any] = {}
+
+            # Bootstrap session cookies from BSE home, then retry API.
+            for attempt in range(1, 4):
+                diagnostics["attempts"] = attempt
+                try:
+                    if attempt == 1:
+                        try:
+                            session.get(
+                                BSECorporateActionsTool.BSE_HOME_URL,
+                                headers=BSECorporateActionsTool._build_headers(),
+                                timeout=15,
+                            )
+                        except Exception as bootstrap_err:
+                            logger.debug("[BSECorporateActions] bootstrap failed: %s", bootstrap_err)
+
+                    response = session.get(
+                        BSECorporateActionsTool.BSE_CORPORATE_ACTIONS_URL,
+                        params=params,
+                        headers=BSECorporateActionsTool._build_headers(
+                            referer=BSECorporateActionsTool.BSE_HOME_URL
+                        ),
+                        timeout=20,
+                    )
+                    response.raise_for_status()
+                    parsed, parse_diag = BSECorporateActionsTool._parse_response_json(response)
+                    last_parse_diag = parse_diag
+                    if parsed is None:
+                        last_error = parse_diag.get("parse_error", "unknown_parse_error")
+                        logger.warning(
+                            "[BSECorporateActions] parse failed attempt %d: %s",
+                            attempt,
+                            last_error,
+                        )
+                        continue
+                    data = parsed
+                    break
+                except Exception as attempt_err:
+                    last_error = str(attempt_err)
+                    logger.warning(
+                        "[BSECorporateActions] request failed attempt %d: %s",
+                        attempt,
+                        attempt_err,
+                    )
+                    continue
+
+            diagnostics.update(last_parse_diag)
+            if data is None:
+                diagnostics["status"] = "error"
+                diagnostics["error"] = last_error or "all_attempts_failed"
+                return {
+                    "dividends": [],
+                    "count": 0,
+                    "from_date": from_date,
+                    "to_date": to_date,
+                    "error": diagnostics["error"],
+                    "source": "bse_india",
+                    "cached_at": datetime.now().isoformat(),
+                    "diagnostics": diagnostics,
+                }
             
             # Parse and filter for dividend announcements
             dividend_items = []
@@ -90,6 +188,19 @@ class BSECorporateActionsTool:
                             "face_value": item.get("FaceValue", ""),
                             "source": "BSE India"
                         })
+            else:
+                diagnostics["status"] = "error"
+                diagnostics["error"] = f"unexpected_payload_type:{type(data).__name__}"
+                return {
+                    "dividends": [],
+                    "count": 0,
+                    "from_date": from_date,
+                    "to_date": to_date,
+                    "error": diagnostics["error"],
+                    "source": "bse_india",
+                    "cached_at": datetime.now().isoformat(),
+                    "diagnostics": diagnostics,
+                }
             
             result = {
                 "dividends": dividend_items,
@@ -97,7 +208,11 @@ class BSECorporateActionsTool:
                 "from_date": from_date,
                 "to_date": to_date,
                 "source": "bse_india",
-                "cached_at": datetime.now().isoformat()
+                "cached_at": datetime.now().isoformat(),
+                "diagnostics": {
+                    **diagnostics,
+                    "status": "ok" if dividend_items else "empty",
+                },
             }
             
             await SQLiteMCPTool.set_cache("corporate_actions", cache_key, result, ttl=3600)
@@ -112,7 +227,12 @@ class BSECorporateActionsTool:
                 "to_date": to_date,
                 "error": str(e),
                 "source": "bse_india",
-                "cached_at": datetime.now().isoformat()
+                "cached_at": datetime.now().isoformat(),
+                "diagnostics": {
+                    **diagnostics,
+                    "status": "error",
+                    "error": str(e),
+                },
             }
 
     @staticmethod

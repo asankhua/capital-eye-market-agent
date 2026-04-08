@@ -4,6 +4,7 @@ Fetches real dividend announcements from BSE India without scraping.
 """
 
 import logging
+import os
 from datetime import datetime, timedelta
 from typing import Any, List, Dict
 import asyncio
@@ -56,7 +57,13 @@ class BSEDividendAPITool:
     """Tool to fetch dividend announcements from BSE India using official API."""
     
     def __init__(self):
-        self.bse = BSE()
+        download_folder = os.path.join(
+            os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
+            "db",
+            "bse_downloads",
+        )
+        os.makedirs(download_folder, exist_ok=True)
+        self.bse = BSE(download_folder=download_folder)
         self._rate_limit_delay = 1.0  # 1 second between requests to respect BSE rate limits
     
     async def _rate_limit(self):
