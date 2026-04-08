@@ -22,14 +22,8 @@ from backend.models.schemas import (
     AnalysisResponse,
     AnalysisType,
     AnalyzeStockRequest,
-    BetaMetrics,
     ChatRequest,
     CompareStocksRequest,
-    CorrelationRequest,
-    CorrelationResponse,
-    DividendInfo,
-    EarningsCalendarResponse,
-    EarningsInfo,
     ErrorResponse,
     ExportRequest,
     FundamentalAnalysis,
@@ -38,16 +32,9 @@ from backend.models.schemas import (
     NewsArticle,
     PortfolioRequest,
     Recommendation,
-    RiskMetricsRequest,
-    RiskMetricsResponse,
     SentimentAnalysis,
-    SharpeRatio,
-    ScreenerRequest,
-    ScreenerResponse,
-    ScreenerResult,
     StockAnalysis,
     TechnicalAnalysis,
-    VaRMetrics,
     WatchlistItem,
 )
 from backend.workflows.market_graph import (
@@ -332,206 +319,55 @@ async def remove_from_watchlist(ticker: str):
     return {"success": True, "ticker": ticker}
 
 
-# Stock Screener endpoint
-@app.post("/screener", response_model=ScreenerResponse)
-async def stock_screener(request: ScreenerRequest):
-    """Screen stocks based on fundamental criteria."""
-    logger.info("POST /screener with criteria: %s", request.model_dump())
-    
-    from backend.tools.advanced_tools import StockScreenerTool
-    
-    try:
-        results = await StockScreenerTool.screen_stocks(
-            min_pe=request.min_pe,
-            max_pe=request.max_pe,
-            min_market_cap=request.min_market_cap,
-            min_profit_margin=request.min_profit_margin,
-            max_debt_to_equity=request.max_debt_to_equity,
-            min_roe=request.min_roe,
-            sector=request.sector,
-            limit=request.limit
-        )
-        
-        return ScreenerResponse(
-            results=[ScreenerResult(**r) for r in results],
-            count=len(results),
-            criteria=request.model_dump(exclude={"limit"})
-        )
-    except Exception as e:
-        logger.error("Error in stock screener: %s", e)
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-# Risk Metrics endpoint
-@app.post("/risk_metrics", response_model=RiskMetricsResponse)
-async def risk_metrics(request: RiskMetricsRequest):
-    """Calculate risk metrics (Sharpe, Beta, VaR) for stocks."""
-    logger.info("POST /risk_metrics for tickers: %s", request.tickers)
-    
-    from backend.tools.advanced_tools import RiskMetricsTool
-    
-    try:
-        sharpe_results = []
-        beta_results = []
-        var_results = []
-        
-        for ticker in request.tickers:
-            sharpe = await RiskMetricsTool.calculate_sharpe_ratio(ticker, request.period)
-            beta = await RiskMetricsTool.calculate_beta(ticker, period=request.period)
-            var = await RiskMetricsTool.calculate_var(ticker, period=request.period)
-            
-            sharpe_results.append(SharpeRatio(**sharpe))
-            beta_results.append(BetaMetrics(**beta))
-            var_results.append(VaRMetrics(**var))
-        
-        return RiskMetricsResponse(
-            sharpe_ratios=sharpe_results,
-            betas=beta_results,
-            var_metrics=var_results
-        )
-    except Exception as e:
-        logger.error("Error calculating risk metrics: %s", e)
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-# Correlation Matrix endpoint
-@app.post("/correlation", response_model=CorrelationResponse)
-async def correlation_matrix(request: CorrelationRequest):
-    """Get correlation matrix for a list of stocks."""
-    logger.info("POST /correlation for tickers: %s", request.tickers)
-    
-    from backend.tools.advanced_tools import CorrelationMatrixTool
-    
-    try:
-        result = await CorrelationMatrixTool.get_correlation_matrix(
-            request.tickers, 
-            request.period
-        )
-        
-        if "error" in result:
-            raise HTTPException(status_code=400, detail=result["error"])
-        
-        return CorrelationResponse(**result)
-    except Exception as e:
-        logger.error("Error calculating correlation: %s", e)
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-# Earnings Calendar endpoint
-@app.get("/earnings/{ticker}", response_model=EarningsInfo)
-async def get_earnings(ticker: str):
-    """Get earnings information for a stock."""
-    logger.info("GET /earnings/%s", ticker)
-    
-    from backend.tools.advanced_tools import EarningsDividendTool
-    
-    try:
-        result = await EarningsDividendTool.get_earnings_info(ticker)
-        return EarningsInfo(**result)
-    except Exception as e:
-        logger.error("Error getting earnings: %s", e)
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-@app.get("/earnings_calendar", response_model=EarningsCalendarResponse)
-async def earnings_calendar(days: int = 30):
-    """Get upcoming earnings calendar."""
-    logger.info("GET /earnings_calendar days=%d", days)
-    
-    earnings = await SQLiteMCPTool.get_upcoming_earnings(days)
-    return EarningsCalendarResponse(
-        earnings=[EarningsInfo(**e) for e in earnings],
-        days_ahead=days
-    )
-
-
-# Dividend endpoint
-@app.get("/dividends/{ticker}", response_model=DividendInfo)
-async def get_dividends(ticker: str):
-    """Get dividend information for a stock."""
-    logger.info("GET /dividends/%s", ticker)
-    
-    from backend.tools.advanced_tools import EarningsDividendTool
-    
-    try:
-        # Get live data from yfinance
-        result = await EarningsDividendTool.get_dividend_info(ticker)
-        
-        # Get historical data from database
-        history = await SQLiteMCPTool.get_dividend_history(ticker)
-        result["history"] = history
-        
-        return DividendInfo(**result)
-    except Exception as e:
-        logger.error("Error getting dividends: %s", e)
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-# MoneyControl Dividend endpoint - returns real-time or sample data from MoneyControl
-@app.get("/moneycontrol/dividends")
-async def get_moneycontrol_dividends(ticker: str = None):
-    """Get dividend information from MoneyControl or sample data."""
-    logger.info("GET /moneycontrol/dividends ticker=%s", ticker)
-    
-    # Use the MoneyControl dividend tool (now uses Finnhub)
-    from backend.tools.moneycontrol_dividend_tool import get_moneycontrol_dividends as mc_get_dividends, get_all_dividends_from_finnhub
-    
-    try:
-        if ticker:
-            result = await mc_get_dividends(ticker)
-        else:
-            # Return all recent dividends
-            result = await get_all_dividends_from_finnhub()
-        return result
-    except Exception as e:
-        logger.error("Error fetching MoneyControl dividends: %s", e)
-        return {
-            "ticker": ticker.upper().replace('.NS', '') if ticker else "ALL",
-            "error": str(e),
-            "history": []
-        }
-
-
-# Get all recent dividend announcements
-@app.get("/moneycontrol/dividends/all")
-async def get_all_dividends():
-    """Get all recent dividend announcements."""
-    logger.info("GET /moneycontrol/dividends/all")
-    
-    from backend.tools.moneycontrol_dividend_tool import get_all_dividends_from_moneycontrol
-    
-    try:
-        result = await get_all_dividends_from_moneycontrol()
-        return result
-    except Exception as e:
-        logger.error("Error fetching all dividends: %s", e)
-        return {
-            "ticker": "ALL",
-            "error": str(e),
-            "announcements": []
-        }
-
-
-# NSE Corporate Actions Dividend endpoint - uses nsefin library
+# NSE Corporate Actions Dividend endpoint - uses BSE Corporate Actions API
 @app.get("/nse/dividends")
 async def nse_dividends(ticker: str = None):
-    """Get dividend announcements from NSE Corporate Actions API."""
+    """Get dividend announcements from BSE Corporate Actions API."""
     logger.info(f"GET /nse/dividends ticker={ticker}")
     
     try:
-        from backend.tools.nse_dividend_tool import nse_dividend_tool
-        result = await nse_dividend_tool.get_dividend_announcements(ticker)
-        # Add source attribution
-        if isinstance(result, dict):
-            result["source"] = "NSE Corporate Actions"
-        return result
-    except Exception as e:
-        logger.error(f"Error fetching NSE dividends: {e}", exc_info=True)
+        from backend.tools.bse_corporate_actions_tool import BSECorporateActionsTool
+        
+        # Get recent dividends (last 90 days to have more data)
+        result = await BSECorporateActionsTool.get_recent_dividends(90)
+        
+        # Filter by ticker if specified
+        dividends = result.get("dividends", [])
+        if ticker:
+            clean_ticker = ticker.upper().replace('.NS', '').replace('.BO', '')
+            dividends = [d for d in dividends if clean_ticker in d.get("symbol", "").upper()]
+        
+        # Format response to match expected structure
+        announcements = []
+        for d in dividends:
+            announcements.append({
+                "ticker": d.get("symbol", ""),
+                "company_name": d.get("company_name", ""),
+                "dividend_amount": None,  # BSE doesn't provide amount in this API
+                "dividend_type": d.get("dividend_type", ""),
+                "ex_dividend_date": d.get("ex_date", ""),
+                "record_date": d.get("record_date", ""),
+                "announcement_date": d.get("announcement_date", ""),
+                "purpose": d.get("purpose", ""),
+                "source": "BSE Corporate Actions"
+            })
+        
         return {
-            "ticker": ticker.upper().replace('.NS', '') if ticker else "ALL",
+            "ticker": ticker.upper().replace('.NS', '').replace('.BO', '') if ticker else "ALL",
+            "announcements": announcements,
+            "count": len(announcements),
+            "source": "BSE Corporate Actions",
+            "search_date": datetime.now().strftime("%d %B %Y"),
+            "error": None
+        }
+    except Exception as e:
+        logger.error(f"Error fetching dividends: {e}", exc_info=True)
+        return {
+            "ticker": ticker.upper().replace('.NS', '').replace('.BO', '') if ticker else "ALL",
             "error": str(e),
             "announcements": [],
-            "source": "NSE API Error"
+            "count": 0,
+            "source": "BSE Corporate Actions - Error"
         }
 
 
@@ -633,68 +469,6 @@ async def export_report(request: ExportRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-# ── Finnhub API Endpoints ─────────────────────────────────────────
-
-@app.get("/finnhub/earnings_calendar")
-async def finnhub_earnings_calendar(from_date: str = None, to_date: str = None, symbol: str = None):
-    """Get earnings calendar from Finnhub."""
-    logger.info("GET /finnhub/earnings_calendar")
-    
-    from backend.tools.finnhub_tool import finnhub_tool
-    
-    try:
-        earnings = finnhub_tool.get_earnings_calendar(symbol, from_date, to_date)
-        return {"earnings": earnings, "count": len(earnings)}
-    except Exception as e:
-        logger.error("Error fetching Finnhub earnings: %s", e)
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-@app.get("/finnhub/market_movers")
-async def finnhub_market_movers(type: str = "gainers"):
-    """Get market movers (gainers/losers/most active) from Finnhub."""
-    logger.info("GET /finnhub/market_movers type=%s", type)
-    
-    try:
-        from backend.tools.finnhub_tool import finnhub_tool
-        movers = finnhub_tool.get_market_movers(type)
-        return {"movers": movers, "type": type, "count": len(movers)}
-    except Exception as e:
-        logger.error("Error fetching Finnhub market movers: %s", e, exc_info=True)
-        raise HTTPException(status_code=503, detail=f"Failed to fetch market movers: {str(e)}")
-
-
-@app.get("/finnhub/news")
-async def finnhub_news(category: str = "general", symbol: str = None):
-    """Get market news from Finnhub."""
-    logger.info("GET /finnhub_news category=%s", category)
-    
-    try:
-        from backend.tools.finnhub_tool import finnhub_tool
-        if symbol:
-            news = finnhub_tool.get_company_news(symbol)
-        else:
-            news = finnhub_tool.get_market_news(category)
-        return {"news": news, "count": len(news)}
-    except Exception as e:
-        logger.error("Error fetching Finnhub news: %s", e, exc_info=True)
-        raise HTTPException(status_code=503, detail=f"Failed to fetch news: {str(e)}")
-
-
-@app.get("/finnhub/sector_performance")
-async def finnhub_sector_performance():
-    """Get Indian sector performance data from NSE sectoral indices."""
-    logger.info("GET /finnhub/sector_performance - Using NSE Indian sectors")
-    
-    try:
-        from backend.tools.nse_market_tool import nse_market_tool
-        sectors = nse_market_tool.get_sector_performance()
-        return {"sectors": sectors, "count": len(sectors), "source": "NSE Sectoral Indices"}
-    except Exception as e:
-        logger.error("Error fetching NSE sector performance: %s", e, exc_info=True)
-        raise HTTPException(status_code=503, detail=f"Failed to fetch sector performance: {str(e)}")
-
-
 @app.get("/nse/sector_performance")
 async def nse_sector_performance():
     """Get Indian sector performance data from NSE sectoral indices."""
@@ -780,10 +554,10 @@ async def debug_nsetools():
     return result
 
 
-@app.get("/twelve_data/market_overview")
-async def twelve_data_market_overview():
+@app.get("/nse/market_overview")
+async def nse_market_overview():
     """Get market overview from nsetools - real-time data."""
-    logger.info("GET /twelve_data/market_overview")
+    logger.info("GET /nse/market_overview")
     
     try:
         from backend.tools.nse_market_tool import nse_market_tool
@@ -795,24 +569,10 @@ async def twelve_data_market_overview():
         raise HTTPException(status_code=503, detail=f"Failed to fetch market data: {str(e)}")
 
 
-@app.get("/twelve_data/indices")
-async def twelve_data_indices():
-    """Get major market indices from Twelve Data."""
-    logger.info("GET /twelve_data/indices")
-    
-    try:
-        from backend.tools.twelve_data_tool import twelve_data_tool
-        indices = twelve_data_tool.get_indices()
-        return {"indices": indices, "count": len(indices)}
-    except Exception as e:
-        logger.error("Error fetching Twelve Data indices: %s", e, exc_info=True)
-        raise HTTPException(status_code=503, detail=f"Failed to fetch indices: {str(e)}")
-
-
-@app.get("/twelve_data/market_movers")
-async def twelve_data_market_movers(type: str = "gainers"):
+@app.get("/nse/market_movers")
+async def nse_market_movers(type: str = "gainers"):
     """Get Indian market movers (gainers/losers) from NSE."""
-    logger.info("GET /twelve_data/market_movers type=%s", type)
+    logger.info("GET /nse/market_movers type=%s", type)
     
     try:
         from backend.tools.nse_market_tool import nse_market_tool

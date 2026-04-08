@@ -1,26 +1,13 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  Star, Filter, Download, History, Calendar, 
-  Shield, GitGraph, Coins, X, ChevronRight 
+  Star, Coins, X, ChevronRight 
 } from 'lucide-react';
 import { Watchlist } from './Watchlist';
-import { StockScreener } from './StockScreener';
-import { ExportReports } from './ExportReports';
-import { HistoricalComparison } from './HistoricalComparison';
-import { EarningsCalendar } from './EarningsCalendar';
-import { RiskMetrics } from './RiskMetrics';
-import { CorrelationMatrix } from './CorrelationMatrix';
 import { DividendTracker } from './DividendTracker';
 
 const features = [
   { id: 'watchlist', label: 'Watchlist', icon: Star, color: '#fbbf24', component: Watchlist },
-  { id: 'screener', label: 'Stock Screener', icon: Filter, color: '#10b981', component: StockScreener },
-  { id: 'export', label: 'Export Reports', icon: Download, color: '#3b82f6', component: ExportReports },
-  { id: 'historical', label: 'Historical', icon: History, color: '#8b5cf6', component: HistoricalComparison },
-  { id: 'earnings', label: 'Earnings', icon: Calendar, color: '#f59e0b', component: EarningsCalendar },
-  { id: 'risk', label: 'Risk Metrics', icon: Shield, color: '#ef4444', component: RiskMetrics },
-  { id: 'correlation', label: 'Correlation', icon: GitGraph, color: '#8b5cf6', component: CorrelationMatrix },
   { id: 'dividend', label: 'Dividends', icon: Coins, color: '#10b981', component: DividendTracker },
 ];
 

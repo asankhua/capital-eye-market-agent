@@ -5,7 +5,6 @@ import type { AnalysisResponse, IntentResponse } from '../types';
 import { Loader2, Send } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { StockCard } from './StockCard';
-import { ExportButton } from './ExportButton';
 
 const ANALYSIS_TYPE_LABELS: Record<string, string> = {
   single: 'Single Stock Analysis',
@@ -143,11 +142,6 @@ export const ChatPanel: React.FC = () => {
               style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}
             >
               {intent && <IntentBadges intent={intent} />}
-              
-              {/* Export Button */}
-              <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                <ExportButton data={response} />
-              </div>
 
               <div style={{ 
                 padding: '20px', 

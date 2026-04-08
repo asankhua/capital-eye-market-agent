@@ -6078,3 +6078,265 @@ fastapi.exceptions.ResponseValidationError: 1 validation error:
 
   File "/Users/asankhua/Trail/market_analyst-main/backend/api/fastapi_server.py", line 269, in chat
     POST /chat
+2026-04-07 16:38:14 | INFO     | market_analyst | Logger initialised – level=INFO, file=dump.log
+2026-04-07 16:38:14 | INFO     | market_analyst.models.schemas | Pydantic schemas loaded
+2026-04-07 16:38:16 | WARNING  | market_analyst.tools.sqlite_cache | MCP not available (requires Python 3.10+), using direct SQLite fallback
+2026-04-07 16:38:16 | INFO     | market_analyst.api.server | Frontend dist not found at /app/frontend/dist - API only mode
+2026-04-07 16:38:16 | INFO     | market_analyst.api.server | FastAPI server starting up
+2026-04-07 16:38:16 | INFO     | market_analyst.tools.sqlite_mcp | SQLite schema initialized with new tables (direct connection)
+2026-04-07 16:38:16 | INFO     | market_analyst.tools.sqlite_mcp | Direct SQLite cache initialized at /Users/asankhua/Trail/market_analyst-main/db/market_analysis.db
+2026-04-07 16:40:57 | INFO     | market_analyst | Logger initialised – level=INFO, file=dump.log
+2026-04-07 16:40:57 | INFO     | market_analyst.models.schemas | Pydantic schemas loaded
+2026-04-07 16:40:59 | WARNING  | market_analyst.tools.sqlite_cache | MCP not available (requires Python 3.10+), using direct SQLite fallback
+2026-04-07 16:40:59 | INFO     | market_analyst.api.server | Frontend dist not found at /app/frontend/dist - API only mode
+2026-04-07 16:40:59 | INFO     | market_analyst.api.server | FastAPI server starting up
+2026-04-07 16:40:59 | INFO     | market_analyst.tools.sqlite_mcp | SQLite schema initialized with new tables (direct connection)
+2026-04-07 16:40:59 | INFO     | market_analyst.tools.sqlite_mcp | Direct SQLite cache initialized at /Users/asankhua/Trail/market_analyst-main/db/market_analysis.db
+2026-04-07 16:40:59 | INFO     | market_analyst.api.server | FastAPI server shutting down
+2026-04-07 16:49:54 | INFO     | market_analyst.api.server | GET /indian_news/market - max_results=5
+2026-04-07 16:49:54 | INFO     | market_analyst.tools.indian_stock_news | [IndianStockNews] Fetching market news, max_results=5
+2026-04-07 16:49:54 | INFO     | market_analyst.tools.indian_stock_news | [IndianStockNews] Starting DuckDuckGo search
+2026-04-07 16:49:54 | ERROR    | market_analyst.tools.indian_stock_news | [IndianStockNews] Error fetching news: __init__() got an unexpected keyword argument 'proxies'
+Traceback (most recent call last):
+  File "/Users/asankhua/Trail/market_analyst-main/backend/tools/indian_stock_news_tool.py", line 56, in get_market_news
+    with DDGS() as ddgs:
+  File "/Users/asankhua/Library/Python/3.9/lib/python/site-packages/duckduckgo_search/duckduckgo_search.py", line 36, in __init__
+    self._client = httpx.Client(headers=headers, proxies=proxies, timeout=timeout, http2=True)
+TypeError: __init__() got an unexpected keyword argument 'proxies'
+2026-04-07 16:49:54 | INFO     | market_analyst.api.server | Indian market news result: count=0, source=indian_stock_news
+2026-04-07 16:49:54 | ERROR    | market_analyst.api.server | Indian news error: __init__() got an unexpected keyword argument 'proxies'
+2026-04-07 16:52:36 | INFO     | market_analyst | Logger initialised – level=INFO, file=dump.log
+2026-04-07 16:52:36 | INFO     | market_analyst.models.schemas | Pydantic schemas loaded
+2026-04-07 16:52:37 | WARNING  | market_analyst.tools.sqlite_cache | MCP not available (requires Python 3.10+), using direct SQLite fallback
+2026-04-07 16:52:37 | INFO     | market_analyst.api.server | Frontend dist not found at /app/frontend/dist - API only mode
+2026-04-07 16:52:37 | INFO     | market_analyst.api.server | FastAPI server starting up
+2026-04-07 16:52:37 | INFO     | market_analyst.tools.sqlite_mcp | SQLite schema initialized with new tables (direct connection)
+2026-04-07 16:52:37 | INFO     | market_analyst.tools.sqlite_mcp | Direct SQLite cache initialized at /Users/asankhua/Trail/market_analyst-main/db/market_analysis.db
+2026-04-07 16:53:06 | INFO     | market_analyst.api.server | GET /indian_news/market - max_results=10
+2026-04-07 16:53:06 | INFO     | market_analyst.tools.indian_stock_news | [IndianStockNews] Fetching market news, max_results=10
+2026-04-07 16:53:06 | INFO     | market_analyst.tools.indian_stock_news | [IndianStockNews] Starting DuckDuckGo search
+2026-04-07 16:53:06 | ERROR    | market_analyst.tools.indian_stock_news | [IndianStockNews] Error fetching news: __init__() got an unexpected keyword argument 'proxies'
+Traceback (most recent call last):
+  File "/Users/asankhua/Trail/market_analyst-main/backend/tools/indian_stock_news_tool.py", line 56, in get_market_news
+    with DDGS() as ddgs:
+  File "/Users/asankhua/Library/Python/3.9/lib/python/site-packages/duckduckgo_search/duckduckgo_search.py", line 36, in __init__
+    self._client = httpx.Client(headers=headers, proxies=proxies, timeout=timeout, http2=True)
+TypeError: __init__() got an unexpected keyword argument 'proxies'
+2026-04-07 16:53:06 | INFO     | market_analyst.api.server | Indian market news result: count=0, source=indian_stock_news
+2026-04-07 16:53:06 | ERROR    | market_analyst.api.server | Indian news error: __init__() got an unexpected keyword argument 'proxies'
+2026-04-07 16:53:10 | INFO     | market_analyst.api.server | GET /indian_news/market - max_results=5
+2026-04-07 16:53:10 | INFO     | market_analyst.tools.indian_stock_news | [IndianStockNews] Fetching market news, max_results=5
+2026-04-07 16:53:10 | INFO     | market_analyst.tools.indian_stock_news | [IndianStockNews] Starting DuckDuckGo search
+2026-04-07 16:53:10 | ERROR    | market_analyst.tools.indian_stock_news | [IndianStockNews] Error fetching news: __init__() got an unexpected keyword argument 'proxies'
+Traceback (most recent call last):
+  File "/Users/asankhua/Trail/market_analyst-main/backend/tools/indian_stock_news_tool.py", line 56, in get_market_news
+    with DDGS() as ddgs:
+  File "/Users/asankhua/Library/Python/3.9/lib/python/site-packages/duckduckgo_search/duckduckgo_search.py", line 36, in __init__
+    self._client = httpx.Client(headers=headers, proxies=proxies, timeout=timeout, http2=True)
+TypeError: __init__() got an unexpected keyword argument 'proxies'
+2026-04-07 16:53:10 | INFO     | market_analyst.api.server | Indian market news result: count=0, source=indian_stock_news
+2026-04-07 16:53:10 | ERROR    | market_analyst.api.server | Indian news error: __init__() got an unexpected keyword argument 'proxies'
+2026-04-07 16:53:11 | INFO     | market_analyst.api.server | GET /indian_news/market - max_results=5
+2026-04-07 16:53:11 | INFO     | market_analyst.tools.indian_stock_news | [IndianStockNews] Fetching market news, max_results=5
+2026-04-07 16:53:11 | INFO     | market_analyst.tools.indian_stock_news | [IndianStockNews] Starting DuckDuckGo search
+2026-04-07 16:53:11 | ERROR    | market_analyst.tools.indian_stock_news | [IndianStockNews] Error fetching news: __init__() got an unexpected keyword argument 'proxies'
+Traceback (most recent call last):
+  File "/Users/asankhua/Trail/market_analyst-main/backend/tools/indian_stock_news_tool.py", line 56, in get_market_news
+    with DDGS() as ddgs:
+  File "/Users/asankhua/Library/Python/3.9/lib/python/site-packages/duckduckgo_search/duckduckgo_search.py", line 36, in __init__
+    self._client = httpx.Client(headers=headers, proxies=proxies, timeout=timeout, http2=True)
+TypeError: __init__() got an unexpected keyword argument 'proxies'
+2026-04-07 16:53:11 | INFO     | market_analyst.api.server | Indian market news result: count=0, source=indian_stock_news
+2026-04-07 16:53:11 | ERROR    | market_analyst.api.server | Indian news error: __init__() got an unexpected keyword argument 'proxies'
+2026-04-07 17:06:18 | INFO     | market_analyst.api.server | FastAPI server shutting down
+2026-04-07 17:06:19 | INFO     | market_analyst | Logger initialised – level=INFO, file=dump.log
+2026-04-07 17:06:19 | INFO     | market_analyst.models.schemas | Pydantic schemas loaded
+2026-04-07 17:06:20 | WARNING  | market_analyst.tools.sqlite_cache | MCP not available (requires Python 3.10+), using direct SQLite fallback
+2026-04-07 17:06:20 | INFO     | market_analyst.api.server | Frontend dist not found at /app/frontend/dist - API only mode
+2026-04-07 17:06:20 | INFO     | market_analyst.api.server | FastAPI server starting up
+2026-04-07 17:06:20 | INFO     | market_analyst.tools.sqlite_mcp | SQLite schema initialized with new tables (direct connection)
+2026-04-07 17:06:20 | INFO     | market_analyst.tools.sqlite_mcp | Direct SQLite cache initialized at /Users/asankhua/Trail/market_analyst-main/db/market_analysis.db
+2026-04-07 17:07:58 | INFO     | market_analyst.api.server | FastAPI server shutting down
+2026-04-07 17:07:59 | INFO     | market_analyst | Logger initialised – level=INFO, file=dump.log
+2026-04-07 17:07:59 | INFO     | market_analyst.models.schemas | Pydantic schemas loaded
+2026-04-07 17:08:00 | WARNING  | market_analyst.tools.sqlite_cache | MCP not available (requires Python 3.10+), using direct SQLite fallback
+2026-04-07 17:08:00 | INFO     | market_analyst.api.server | Frontend dist not found at /app/frontend/dist - API only mode
+2026-04-07 17:08:00 | INFO     | market_analyst.api.server | FastAPI server starting up
+2026-04-07 17:08:00 | INFO     | market_analyst.tools.sqlite_mcp | SQLite schema initialized with new tables (direct connection)
+2026-04-07 17:08:00 | INFO     | market_analyst.tools.sqlite_mcp | Direct SQLite cache initialized at /Users/asankhua/Trail/market_analyst-main/db/market_analysis.db
+2026-04-07 17:27:30 | INFO     | market_analyst | Logger initialised – level=INFO, file=dump.log
+2026-04-07 17:27:30 | INFO     | market_analyst.models.schemas | Pydantic schemas loaded
+2026-04-07 17:27:31 | WARNING  | market_analyst.tools.sqlite_cache | MCP not available (requires Python 3.10+), using direct SQLite fallback
+2026-04-07 17:27:31 | INFO     | market_analyst.api.server | Frontend dist not found at /app/frontend/dist - API only mode
+2026-04-07 17:27:31 | INFO     | market_analyst.api.server | FastAPI server starting up
+2026-04-07 17:27:31 | INFO     | market_analyst.tools.sqlite_mcp | SQLite schema initialized with new tables (direct connection)
+2026-04-07 17:27:31 | INFO     | market_analyst.tools.sqlite_mcp | Direct SQLite cache initialized at /Users/asankhua/Trail/market_analyst-main/db/market_analysis.db
+2026-04-07 17:31:21 | INFO     | market_analyst.api.server | GET /indian_news/market - max_results=3
+2026-04-07 17:31:21 | INFO     | market_analyst.tools.indian_stock_news | [IndianStockNews] Fetching market news from RSS feeds, max_results=3
+2026-04-07 17:31:21 | INFO     | market_analyst.tools.indian_stock_news | [IndianStockNews] Fetched 3 items from moneycontrol
+2026-04-07 17:31:22 | INFO     | market_analyst.tools.indian_stock_news | [IndianStockNews] Fetched 3 items from economictimes
+2026-04-07 17:31:22 | INFO     | market_analyst.tools.indian_stock_news | [IndianStockNews] Fetched 3 items from mint
+2026-04-07 17:31:23 | WARNING  | market_analyst.tools.indian_stock_news | [IndianStockNews] Failed to fetch from ndtvprofit: 404 Client Error: Not Found for url: https://www.ndtvprofit.com/rss/news
+2026-04-07 17:31:24 | WARNING  | market_analyst.tools.indian_stock_news | [IndianStockNews] Failed to fetch from zeebiz: no element found: line 2, column 0
+2026-04-07 17:31:24 | INFO     | market_analyst.tools.indian_stock_news | [IndianStockNews] Total RSS news items: 9
+2026-04-07 17:31:24 | ERROR    | market_analyst.tools.indian_stock_news | [IndianStockNews] Error fetching news from RSS: set_cache() got an unexpected keyword argument 'ttl'
+Traceback (most recent call last):
+  File "/Users/asankhua/Trail/market_analyst-main/backend/tools/indian_stock_news_tool.py", line 125, in get_market_news
+    await SQLiteMCPTool.set_cache("indian_news", cache_key, result, ttl=3600)
+TypeError: set_cache() got an unexpected keyword argument 'ttl'
+2026-04-07 17:31:24 | INFO     | market_analyst.api.server | Indian market news result: count=0, source=rss_feeds
+2026-04-07 17:31:24 | ERROR    | market_analyst.api.server | Indian news error: set_cache() got an unexpected keyword argument 'ttl'
+2026-04-07 17:33:39 | INFO     | market_analyst | Logger initialised – level=INFO, file=dump.log
+2026-04-07 17:33:39 | INFO     | market_analyst.models.schemas | Pydantic schemas loaded
+2026-04-07 17:33:40 | WARNING  | market_analyst.tools.sqlite_cache | MCP not available (requires Python 3.10+), using direct SQLite fallback
+2026-04-07 17:33:40 | INFO     | market_analyst.api.server | Frontend dist not found at /app/frontend/dist - API only mode
+2026-04-07 17:33:40 | INFO     | market_analyst.api.server | FastAPI server starting up
+2026-04-07 17:33:40 | INFO     | market_analyst.tools.sqlite_mcp | SQLite schema initialized with new tables (direct connection)
+2026-04-07 17:33:40 | INFO     | market_analyst.tools.sqlite_mcp | Direct SQLite cache initialized at /Users/asankhua/Trail/market_analyst-main/db/market_analysis.db
+2026-04-07 17:33:57 | INFO     | market_analyst.api.server | GET /indian_news/market - max_results=3
+2026-04-07 17:33:57 | INFO     | market_analyst.tools.indian_stock_news | [IndianStockNews] Fetching market news from RSS feeds, max_results=3
+2026-04-07 17:33:58 | INFO     | market_analyst.tools.indian_stock_news | [IndianStockNews] Fetched 3 items from moneycontrol
+2026-04-07 17:33:58 | INFO     | market_analyst.tools.indian_stock_news | [IndianStockNews] Fetched 3 items from economictimes
+2026-04-07 17:33:59 | INFO     | market_analyst.tools.indian_stock_news | [IndianStockNews] Fetched 3 items from mint
+2026-04-07 17:33:59 | WARNING  | market_analyst.tools.indian_stock_news | [IndianStockNews] Failed to fetch from ndtvprofit: 404 Client Error: Not Found for url: https://www.ndtvprofit.com/rss/news
+2026-04-07 17:34:00 | WARNING  | market_analyst.tools.indian_stock_news | [IndianStockNews] Failed to fetch from zeebiz: no element found: line 2, column 0
+2026-04-07 17:34:00 | INFO     | market_analyst.tools.indian_stock_news | [IndianStockNews] Total RSS news items: 9
+2026-04-07 17:34:00 | ERROR    | market_analyst.tools.indian_stock_news | [IndianStockNews] Error fetching news from RSS: set_cache() got an unexpected keyword argument 'ttl'
+Traceback (most recent call last):
+  File "/Users/asankhua/Trail/market_analyst-main/backend/tools/indian_stock_news_tool.py", line 125, in get_market_news
+    await SQLiteMCPTool.set_cache("indian_news", cache_key, result, ttl=3600)
+TypeError: set_cache() got an unexpected keyword argument 'ttl'
+2026-04-07 17:34:00 | INFO     | market_analyst.api.server | Indian market news result: count=0, source=rss_feeds
+2026-04-07 17:34:00 | ERROR    | market_analyst.api.server | Indian news error: set_cache() got an unexpected keyword argument 'ttl'
+2026-04-07 17:34:22 | INFO     | market_analyst.api.server | GET /indian_news/market - max_results=3
+2026-04-07 17:34:22 | INFO     | market_analyst.tools.indian_stock_news | [IndianStockNews] Fetching market news from RSS feeds, max_results=3
+2026-04-07 17:34:22 | INFO     | market_analyst.tools.indian_stock_news | [IndianStockNews] Fetched 3 items from moneycontrol
+2026-04-07 17:34:23 | INFO     | market_analyst.tools.indian_stock_news | [IndianStockNews] Fetched 3 items from economictimes
+2026-04-07 17:34:23 | INFO     | market_analyst.tools.indian_stock_news | [IndianStockNews] Fetched 3 items from mint
+2026-04-07 17:34:24 | WARNING  | market_analyst.tools.indian_stock_news | [IndianStockNews] Failed to fetch from ndtvprofit: 404 Client Error: Not Found for url: https://www.ndtvprofit.com/rss/news
+2026-04-07 17:34:24 | WARNING  | market_analyst.tools.indian_stock_news | [IndianStockNews] Failed to fetch from zeebiz: no element found: line 2, column 0
+2026-04-07 17:34:24 | INFO     | market_analyst.tools.indian_stock_news | [IndianStockNews] Total RSS news items: 9
+2026-04-07 17:34:24 | ERROR    | market_analyst.tools.indian_stock_news | [IndianStockNews] Error fetching news from RSS: set_cache() got an unexpected keyword argument 'ttl'
+Traceback (most recent call last):
+  File "/Users/asankhua/Trail/market_analyst-main/backend/tools/indian_stock_news_tool.py", line 125, in get_market_news
+    await SQLiteMCPTool.set_cache("indian_news", cache_key, result, ttl=3600)
+TypeError: set_cache() got an unexpected keyword argument 'ttl'
+2026-04-07 17:34:24 | INFO     | market_analyst.api.server | Indian market news result: count=0, source=rss_feeds
+2026-04-07 17:34:24 | ERROR    | market_analyst.api.server | Indian news error: set_cache() got an unexpected keyword argument 'ttl'
+2026-04-07 17:35:36 | INFO     | market_analyst.api.server | GET /indian_news/market - max_results=3
+2026-04-07 17:35:36 | INFO     | market_analyst.tools.indian_stock_news | [IndianStockNews] Fetching market news from RSS feeds, max_results=3
+2026-04-07 17:35:36 | INFO     | market_analyst.tools.indian_stock_news | [IndianStockNews] Fetched 3 items from moneycontrol
+2026-04-07 17:35:37 | INFO     | market_analyst.tools.indian_stock_news | [IndianStockNews] Fetched 3 items from economictimes
+2026-04-07 17:35:37 | INFO     | market_analyst.tools.indian_stock_news | [IndianStockNews] Fetched 3 items from mint
+2026-04-07 17:35:38 | WARNING  | market_analyst.tools.indian_stock_news | [IndianStockNews] Failed to fetch from ndtvprofit: 404 Client Error: Not Found for url: https://www.ndtvprofit.com/rss/news
+2026-04-07 17:35:39 | WARNING  | market_analyst.tools.indian_stock_news | [IndianStockNews] Failed to fetch from zeebiz: no element found: line 2, column 0
+2026-04-07 17:35:39 | INFO     | market_analyst.tools.indian_stock_news | [IndianStockNews] Total RSS news items: 9
+2026-04-07 17:35:39 | ERROR    | market_analyst.tools.indian_stock_news | [IndianStockNews] Error fetching news from RSS: set_cache() got an unexpected keyword argument 'ttl'
+Traceback (most recent call last):
+  File "/Users/asankhua/Trail/market_analyst-main/backend/tools/indian_stock_news_tool.py", line 125, in get_market_news
+    await SQLiteMCPTool.set_cache("indian_news", cache_key, result, ttl=3600)
+TypeError: set_cache() got an unexpected keyword argument 'ttl'
+2026-04-07 17:35:39 | INFO     | market_analyst.api.server | Indian market news result: count=0, source=rss_feeds
+2026-04-07 17:35:39 | ERROR    | market_analyst.api.server | Indian news error: set_cache() got an unexpected keyword argument 'ttl'
+2026-04-07 17:35:39 | INFO     | market_analyst.api.server | GET /nse/dividends ticker=None
+2026-04-07 17:35:39 | INFO     | market_analyst.tools.bse_dividend | [BSEDividendTool] Initialized with BSE API
+2026-04-07 17:35:39 | INFO     | market_analyst.tools.bse_dividend | [BSEDividendTool] Fetching dividend announcements for all stocks
+2026-04-07 17:35:39 | INFO     | market_analyst.tools.bse_dividend | [BSEDividendTool] Calling BSE API: https://api.bseindia.com/BseIndiaAPI/api/CorpAction/w
+2026-04-07 17:35:39 | INFO     | market_analyst.tools.bse_dividend | [BSEDividendTool] Found 0 dividend announcements from BSE
+2026-04-07 17:36:58 | INFO     | market_analyst.api.server | FastAPI server shutting down
+2026-04-07 17:37:01 | INFO     | market_analyst | Logger initialised – level=INFO, file=dump.log
+2026-04-07 17:37:01 | INFO     | market_analyst.models.schemas | Pydantic schemas loaded
+2026-04-07 17:37:02 | WARNING  | market_analyst.tools.sqlite_cache | MCP not available (requires Python 3.10+), using direct SQLite fallback
+2026-04-07 17:37:02 | INFO     | market_analyst.api.server | Frontend dist not found at /app/frontend/dist - API only mode
+2026-04-07 17:37:02 | INFO     | market_analyst.api.server | FastAPI server starting up
+2026-04-07 17:37:02 | INFO     | market_analyst.tools.sqlite_mcp | SQLite schema initialized with new tables (direct connection)
+2026-04-07 17:37:02 | INFO     | market_analyst.tools.sqlite_mcp | Direct SQLite cache initialized at /Users/asankhua/Trail/market_analyst-main/db/market_analysis.db
+2026-04-07 17:37:46 | INFO     | market_analyst.api.server | GET /indian_news/market - max_results=3
+2026-04-07 17:37:46 | INFO     | market_analyst.tools.indian_stock_news | [IndianStockNews] Fetching market news from RSS feeds, max_results=3
+2026-04-07 17:37:46 | INFO     | market_analyst.tools.indian_stock_news | [IndianStockNews] Fetched 3 items from moneycontrol
+2026-04-07 17:37:47 | INFO     | market_analyst.tools.indian_stock_news | [IndianStockNews] Fetched 3 items from economictimes
+2026-04-07 17:37:47 | INFO     | market_analyst.tools.indian_stock_news | [IndianStockNews] Fetched 3 items from mint
+2026-04-07 17:37:48 | WARNING  | market_analyst.tools.indian_stock_news | [IndianStockNews] Failed to fetch from ndtvprofit: 404 Client Error: Not Found for url: https://www.ndtvprofit.com/rss/news
+2026-04-07 17:37:48 | WARNING  | market_analyst.tools.indian_stock_news | [IndianStockNews] Failed to fetch from zeebiz: no element found: line 2, column 0
+2026-04-07 17:37:48 | INFO     | market_analyst.tools.indian_stock_news | [IndianStockNews] Total RSS news items: 9
+2026-04-07 17:37:48 | INFO     | market_analyst.tools.sqlite_mcp | Cache SET for indian_news:indian_market_news (SQLite)
+2026-04-07 17:37:48 | INFO     | market_analyst.api.server | Indian market news result: count=3, source=rss_feeds
+2026-04-07 17:37:48 | INFO     | market_analyst.api.server | GET /nse/dividends ticker=None
+2026-04-07 17:37:48 | INFO     | market_analyst.tools.bse_dividend | [BSEDividendTool] Initialized with BSE API
+2026-04-07 17:37:48 | INFO     | market_analyst.tools.bse_dividend | [BSEDividendTool] Fetching dividend announcements for all stocks
+2026-04-07 17:37:48 | INFO     | market_analyst.tools.bse_dividend | [BSEDividendTool] Calling BSE API: https://api.bseindia.com/BseIndiaAPI/api/CorpAction/w
+2026-04-07 17:37:49 | INFO     | market_analyst.tools.bse_dividend | [BSEDividendTool] Found 0 dividend announcements from BSE
+2026-04-07 17:38:21 | INFO     | market_analyst.api.server | GET /indian_news/market - max_results=3
+2026-04-07 17:38:21 | INFO     | market_analyst.tools.indian_stock_news | [IndianStockNews] Fetching market news from RSS feeds, max_results=3
+2026-04-07 17:38:21 | INFO     | market_analyst.tools.sqlite_mcp | Cache HIT for indian_news:indian_market_news (SQLite)
+2026-04-07 17:38:21 | INFO     | market_analyst.tools.indian_stock_news | [IndianStockNews] Returning cached news from today
+2026-04-07 17:38:21 | INFO     | market_analyst.api.server | Indian market news result: count=3, source=rss_feeds
+2026-04-07 17:38:43 | INFO     | market_analyst.api.server | GET /nse/dividends ticker=None
+2026-04-07 17:38:43 | INFO     | market_analyst.tools.bse_dividend | [BSEDividendTool] Fetching dividend announcements for all stocks
+2026-04-07 17:38:43 | INFO     | market_analyst.tools.bse_dividend | [BSEDividendTool] Calling BSE API: https://api.bseindia.com/BseIndiaAPI/api/CorpAction/w
+2026-04-07 17:38:43 | INFO     | market_analyst.tools.bse_dividend | [BSEDividendTool] Found 0 dividend announcements from BSE
+2026-04-07 17:55:49 | INFO     | market_analyst.api.server | FastAPI server shutting down
+2026-04-07 17:55:51 | INFO     | market_analyst | Logger initialised – level=INFO, file=dump.log
+2026-04-07 17:55:51 | INFO     | market_analyst.models.schemas | Pydantic schemas loaded
+2026-04-07 17:55:53 | WARNING  | market_analyst.tools.sqlite_cache | MCP not available (requires Python 3.10+), using direct SQLite fallback
+2026-04-07 17:55:53 | INFO     | market_analyst.api.server | Frontend dist not found at /app/frontend/dist - API only mode
+2026-04-07 17:55:53 | INFO     | market_analyst.api.server | FastAPI server starting up
+2026-04-07 17:55:53 | INFO     | market_analyst.tools.sqlite_mcp | SQLite schema initialized with new tables (direct connection)
+2026-04-07 17:55:53 | INFO     | market_analyst.tools.sqlite_mcp | Direct SQLite cache initialized at /Users/asankhua/Trail/market_analyst-main/db/market_analysis.db
+2026-04-07 17:57:44 | INFO     | market_analyst.api.server | GET /indian_news/market - max_results=3
+2026-04-07 17:57:44 | ERROR    | market_analyst.api.server | Error fetching Indian market news: invalid syntax (indian_stock_news_tool.py, line 88)
+Traceback (most recent call last):
+  File "/Users/asankhua/Trail/market_analyst-main/backend/api/fastapi_server.py", line 832, in indian_market_news
+    from backend.tools.indian_stock_news_tool import indian_stock_news_tool
+  File "/Users/asankhua/Trail/market_analyst-main/backend/tools/indian_stock_news_tool.py", line 88
+    "q": "(NSE OR BSE OR "Sensex" OR "Nifty") AND (stock OR market OR shares)",
+                          ^
+SyntaxError: invalid syntax
+2026-04-07 18:14:08 | INFO     | market_analyst.api.server | FastAPI server shutting down
+2026-04-07 18:14:10 | INFO     | market_analyst | Logger initialised – level=INFO, file=dump.log
+2026-04-07 18:14:10 | INFO     | market_analyst.models.schemas | Pydantic schemas loaded
+2026-04-07 18:14:12 | WARNING  | market_analyst.tools.sqlite_cache | MCP not available (requires Python 3.10+), using direct SQLite fallback
+2026-04-07 18:14:12 | INFO     | market_analyst.api.server | Frontend dist not found at /app/frontend/dist - API only mode
+2026-04-07 18:14:12 | INFO     | market_analyst.api.server | FastAPI server starting up
+2026-04-07 18:14:12 | INFO     | market_analyst.tools.sqlite_mcp | SQLite schema initialized with new tables (direct connection)
+2026-04-07 18:14:12 | INFO     | market_analyst.tools.sqlite_mcp | Direct SQLite cache initialized at /Users/asankhua/Trail/market_analyst-main/db/market_analysis.db
+2026-04-07 19:38:46 | INFO     | market_analyst.api.server | GET /indian_news/market - max_results=3
+2026-04-07 19:38:46 | INFO     | market_analyst.tools.indian_stock_news | [IndianStockNews] Fetching market news from RSS feeds with Indian market filter
+2026-04-07 19:38:46 | INFO     | market_analyst.tools.sqlite_mcp | Cache HIT for indian_news:indian_market_news (SQLite)
+2026-04-07 19:38:46 | INFO     | market_analyst.tools.indian_stock_news | [IndianStockNews] Returning cached news from today
+2026-04-07 19:38:46 | INFO     | market_analyst.api.server | Indian market news result: count=3, source=rss_feeds
+2026-04-07 19:39:15 | INFO     | market_analyst.api.server | FastAPI server shutting down
+2026-04-07 19:39:18 | INFO     | market_analyst | Logger initialised – level=INFO, file=dump.log
+2026-04-07 19:39:18 | INFO     | market_analyst.models.schemas | Pydantic schemas loaded
+2026-04-07 19:39:19 | WARNING  | market_analyst.tools.sqlite_cache | MCP not available (requires Python 3.10+), using direct SQLite fallback
+2026-04-07 19:39:19 | INFO     | market_analyst.api.server | Frontend dist not found at /app/frontend/dist - API only mode
+2026-04-07 19:39:19 | INFO     | market_analyst.api.server | FastAPI server starting up
+2026-04-07 19:39:19 | INFO     | market_analyst.tools.sqlite_mcp | SQLite schema initialized with new tables (direct connection)
+2026-04-07 19:39:19 | INFO     | market_analyst.tools.sqlite_mcp | Direct SQLite cache initialized at /Users/asankhua/Trail/market_analyst-main/db/market_analysis.db
+2026-04-07 19:39:21 | INFO     | market_analyst.api.server | GET /indian_news/market - max_results=3
+2026-04-07 19:39:21 | INFO     | market_analyst.tools.indian_stock_news | [IndianStockNews] Fetching market news from RSS feeds with Indian market filter
+2026-04-07 19:39:21 | INFO     | market_analyst.tools.sqlite_mcp | Cache HIT for indian_news:indian_market_news (SQLite)
+2026-04-07 19:39:21 | INFO     | market_analyst.tools.indian_stock_news | [IndianStockNews] Returning cached news from today
+2026-04-07 19:39:21 | INFO     | market_analyst.api.server | Indian market news result: count=3, source=rss_feeds
+2026-04-07 19:44:22 | INFO     | market_analyst.api.server | GET /indian_news/market - max_results=3
+2026-04-07 19:44:22 | INFO     | market_analyst.tools.indian_stock_news | [IndianStockNews] Fetching market news from RSS feeds with Indian market filter
+2026-04-07 19:44:22 | INFO     | market_analyst.tools.sqlite_mcp | Cache HIT for indian_news:indian_market_news (SQLite)
+2026-04-07 19:44:22 | INFO     | market_analyst.tools.indian_stock_news | [IndianStockNews] Returning cached news from today
+2026-04-07 19:44:22 | INFO     | market_analyst.api.server | Indian market news result: count=3, source=rss_feeds
+2026-04-07 19:45:35 | INFO     | market_analyst.api.server | GET /indian_news/market - max_results=3
+2026-04-07 19:45:35 | INFO     | market_analyst.tools.indian_stock_news | [IndianStockNews] Fetching market news from RSS feeds with Indian market filter
+2026-04-07 19:45:35 | INFO     | market_analyst.tools.sqlite_mcp | Cache HIT for indian_news:indian_market_news (SQLite)
+2026-04-07 19:45:35 | INFO     | market_analyst.tools.indian_stock_news | [IndianStockNews] Returning cached news from today
+2026-04-07 19:45:35 | INFO     | market_analyst.api.server | Indian market news result: count=3, source=rss_feeds
+2026-04-07 19:49:23 | INFO     | market_analyst.api.server | GET /indian_news/market - max_results=3
+2026-04-07 19:49:23 | INFO     | market_analyst.tools.indian_stock_news | [IndianStockNews] Fetching market news from RSS feeds with Indian market filter
+2026-04-07 19:49:23 | INFO     | market_analyst.tools.sqlite_mcp | Cache HIT for indian_news:indian_market_news (SQLite)
+2026-04-07 19:49:23 | INFO     | market_analyst.tools.indian_stock_news | [IndianStockNews] Returning cached news from today
+2026-04-07 19:49:23 | INFO     | market_analyst.api.server | Indian market news result: count=3, source=rss_feeds
+2026-04-07 19:53:04 | INFO     | market_analyst.api.server | GET /indian_news/market - max_results=3
+2026-04-07 19:53:04 | INFO     | market_analyst.tools.indian_stock_news | [IndianStockNews] Fetching market news from RSS feeds with Indian market filter
+2026-04-07 19:53:04 | INFO     | market_analyst.tools.sqlite_mcp | Cache HIT for indian_news:indian_market_news (SQLite)
+2026-04-07 19:53:04 | INFO     | market_analyst.tools.indian_stock_news | [IndianStockNews] Returning cached news from today
+2026-04-07 19:53:04 | INFO     | market_analyst.api.server | Indian market news result: count=3, source=rss_feeds
+2026-04-07 20:19:09 | INFO     | market_analyst | Logger initialised – level=INFO, file=dump.log
+2026-04-07 20:19:09 | WARNING  | market_analyst | [MarketData] nsetools not available for Indian markets

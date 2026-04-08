@@ -24,9 +24,9 @@ export const MarketOverview: React.FC = () => {
   const loadMarketOverview = async () => {
     setLoading(true);
     try {
-      const data = await api.getTwelveDataMarketOverview();
-      setIndices(data.indices || []);
-      setTimestamp(data.timestamp || '');
+      const overview = await api.getNSEMarketOverview();
+      setIndices(overview.indices || []);
+      setTimestamp(overview.timestamp || '');
     } catch (err) {
       setError('Failed to load market overview');
       console.error(err);
