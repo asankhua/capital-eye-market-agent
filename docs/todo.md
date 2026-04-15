@@ -174,11 +174,11 @@ Comprehensive task breakdown derived from [architecture.md](./architecture.md).
 
 ## Phase 8 · DevOps & Documentation
 - [x] **P8-1** Add `Makefile` with common commands (install, dev, test, lint, docker-build)
-- [x] **P8-2** Create `Dockerfile` for Hugging Face Spaces deployment
+- [x] **P8-2** Create `Dockerfile` for containerized deployment
 - [ ] **P8-3** Create `docker-compose.yml` (backend + Streamlit + React services)
 - [x] **P8-4** Update architecture.md with full system documentation
 - [x] **P8-5** API documentation (auto-gen via FastAPI /docs)
-- [x] **P8-6** Hugging Face Spaces deployment (auto-sync via GitHub Action)
+- [x] **P8-6** Render deployment configuration (render.yaml, render_start.sh)
 - [ ] **P8-7** Update `README.md` with full setup, usage, and architecture overview
 
 ---

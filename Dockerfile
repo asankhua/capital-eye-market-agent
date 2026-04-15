@@ -1,4 +1,4 @@
-# Capital Eye Market Agent - Hugging Face Spaces Dockerfile
+# Capital Eye Market Agent - Production Dockerfile
 # Multi-stage build for optimized deployment
 
 FROM python:3.11-slim as backend-builder

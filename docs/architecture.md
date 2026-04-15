@@ -761,10 +761,10 @@ Logging:
 - **Removed:** DividendTracker, FeaturesPanel, Watchlist (not used in current UI)
 - **StockCard:** Now includes StockChart for price visualization
 
-### 14.7 Hugging Face Deployment
-- **GitHub Action:** `.github/workflows/sync-to-huggingface.yml` for auto-sync to Hugging Face
-- **Dockerfile:** Multi-stage build optimized for HF Spaces (port 7860)
-- **Live URL:** https://huggingface.co/spaces/ashishsankhua/capital_eye_market_agent
+### 14.7 Render Deployment
+- **Blueprint:** `render.yaml` for auto-configuration
+- **Start Script:** `render_start.sh` for server startup
+- **Dockerfile:** Multi-stage build optimized for production
 
 ---
 
@@ -779,14 +779,13 @@ python3 -m uvicorn backend.api.fastapi_server:app --host 0.0.0.0 --port 8000
 cd frontend/react-directory && npm run dev
 ```
 
-### Hugging Face Spaces (Production)
+### Render (Production)
 ```bash
-# Build and run locally
-docker build -t capital-eye .
-docker run -p 7860:7860 -e GROQ_API_KEY=your_key capital-eye
+# Deploy via Render Blueprint or manually
+# See RENDER_DEPLOY.md for instructions
 ```
 
-**Live URL:** https://huggingface.co/spaces/ashishsankhua/capital_eye_market_agent
+**Configuration:** `render.yaml` with environment variables for `GROQ_API_KEY`
 
 ---
 

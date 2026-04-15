@@ -1,14 +1,4 @@
----
-title: Capital Eye Market Agent
-emoji: 📈
-colorFrom: blue
-colorTo: green
-sdk: docker
-app_file: backend/api/fastapi_server.py
-pinned: false
----
-
-# AI Multiple Market Agent
+# Capital Eye Market Agent
 
 ![FastAPI](https://img.shields.io/badge/FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white)
 ![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)
@@ -18,10 +8,6 @@ pinned: false
 ![LangGraph](https://img.shields.io/badge/LangGraph-1C3A3A?style=for-the-badge&logo=langchain&logoColor=white)
 
 **AI-powered multi-agent system** for Indian stock market analysis. Uses specialized agents (Fundamental, Technical, Sentiment) orchestrated via LangGraph, with a FastAPI backend and React frontend.
-
-## Live Demo
-
-**URL**: https://huggingface.co/spaces/ashishsankhua/capital_eye_market_agent
 
 ## Who Is This For?
 
@@ -198,16 +184,21 @@ LOG_LEVEL=INFO
 
 ## Deployment
 
-### Hugging Face Spaces (Recommended)
+### Render (Recommended)
 
-**Live Instance:** https://huggingface.co/spaces/ashishsankhua/capital_eye_market_agent
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy)
 
 **Setup:**
-1. Add `HF_TOKEN` secret in GitHub repository settings
-2. Push to `main` branch - GitHub Action auto-syncs to Hugging Face
-3. Configure `GROQ_API_KEY` in Hugging Face Spaces settings
+1. Connect your GitHub repo to Render
+2. Set environment variables in Render dashboard:
+   - `GROQ_API_KEY` - Your Groq API key
+   - `API_BASE_URL` - Your Render service URL
+   - `REACT_APP_API_URL` - Same as API_BASE_URL
+3. Deploy automatically on every push to `main`
 
-**Local Docker:**
+See [RENDER_DEPLOY.md](RENDER_DEPLOY.md) for detailed instructions.
+
+### Docker (Local)
 ```bash
 docker build -t capital-eye .
 docker run -p 7860:7860 -e GROQ_API_KEY=your_key capital-eye
@@ -247,12 +238,6 @@ npm run build
 - [docs/case_study.md](docs/case_study.md) - Implementation details and lessons learned
 - [SKILL.md](SKILL.md) - Project patterns and best practices
 
-## Working Commits
-
-| Environment | Commit | Status | Notes |
-|-------------|--------|--------|-------|
-| **Production** | `3dca0df` | Latest | Cleanup: Removed unused files, updated docs |
-
 ---
 
-*AI Multiple Market Agent - AI-powered stock analysis for Indian markets*
+*Capital Eye Market Agent - AI-powered stock analysis for Indian markets*

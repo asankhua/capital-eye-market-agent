@@ -21,7 +21,7 @@ AI Market Analyst is an **AI-powered multi-agent system** for Indian stock marke
 - Market movers (top gainers/losers) in INR
 - Multi-agent parallel processing
 - Two-level caching for performance
-- Hugging Face deployment with auto-sync
+- Render deployment with auto-deploy on git push
 
 ---
 
@@ -214,7 +214,7 @@ cd frontend/react-directory && npm run dev
 ```
 
 ### Production (per SKILL.md patterns)
-- **Backend:** Render / Railway / HuggingFace Spaces
+- **Backend:** Render / Railway
 - **Frontend:** Vercel / Netlify
 - **Database:** SQLite (file-based, no external DB needed)
 
@@ -269,26 +269,30 @@ cd frontend/react-directory && npm run dev
 - **Active:** Header, Footer, Sidebar, ChatPanel, MarketOverview, MarketMovers, NewsInsights, SectorAnalysis, SettingsPage, StockCard, StockChart, DebugPanel, NewsSection
 - **Removed:** DividendTracker, FeaturesPanel, Watchlist (not used in current UI)
 
-#### 12.7 Hugging Face Deployment
-- **GitHub Action:** `.github/workflows/sync-to-huggingface.yml` for auto-sync
-- **Live URL:** https://huggingface.co/spaces/ashishsankhua/capital_eye_market_agent
+#### 12.7 Render Deployment
+- **Blueprint:** `render.yaml` for auto-configuration
+- **Start Script:** `render_start.sh` for server startup
+- **Config:** Environment variables for `GROQ_API_KEY`, `API_BASE_URL`
 
 ---
 
 ## 13. Deployment Guide
 
-### Hugging Face Spaces
+### Render (Recommended)
 
 **Prerequisites:**
-- Hugging Face account with Spaces access
-- GitHub repository synced to HF
+- Render account (free tier available)
+- GitHub repository connected to Render
 
 **Setup Steps:**
-1. Create HF_TOKEN secret in GitHub repository settings
-2. Push to main branch triggers auto-sync to Hugging Face
-3. Configure environment variables in HF Spaces settings
+1. Connect GitHub repo to Render
+2. Set environment variables in Render dashboard:
+   - `GROQ_API_KEY` - Your Groq API key
+   - `API_BASE_URL` - Your Render service URL
+   - `REACT_APP_API_URL` - Same as API_BASE_URL
+3. Push to main branch triggers auto-deploy
 
-**Live Instance:** https://huggingface.co/spaces/ashishsankhua/capital_eye_market_agent
+See [RENDER_DEPLOY.md](../RENDER_DEPLOY.md) for detailed instructions.
 
 ### Environment Variables Required
 
