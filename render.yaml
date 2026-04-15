@@ -1,0 +1,44 @@
+# Render.com deployment configuration for Capital Eye Market Agent
+# This file configures the web service on Render
+
+services:
+  # Web Service - FastAPI Backend + React Frontend
+  - type: web
+    name: capital-eye-market-agent
+    runtime: python
+    plan: starter
+    buildCommand: |
+      # Install Python dependencies
+      pip install -r requirements.txt
+      # Install Node.js and build frontend
+      apt-get update && apt-get install -y curl
+      curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
+      apt-get install -y nodejs
+      # Build frontend
+      cd frontend/react-directory && npm ci && npm run build
+    startCommand: chmod +x render_start.sh && ./render_start.sh
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: PORT
+        value: 10000
+      - key: GROQ_API_KEY
+        sync: false  # Set in Render dashboard
+      - key: GROQ_MODEL
+        value: llama-3.3-70b-versatile
+      - key: LLM_PROVIDER
+        value: groq
+      - key: API_BASE_URL
+        value: https://capital-eye-market-agent.onrender.com
+      - key: REACT_APP_API_URL
+        value: https://capital-eye-market-agent.onrender.com
+      - key: LOG_LEVEL
+        value: INFO
+      - key: CACHE_TTL_SECONDS
+        value: 300
+      - key: PYTHONUNBUFFERED
+        value: 1
+    disk:
+      name: data
+      mountPath: /app/data
+      sizeGB: 1

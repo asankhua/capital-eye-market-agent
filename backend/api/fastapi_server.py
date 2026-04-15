@@ -83,13 +83,27 @@ app.add_middleware(
 
 # ── Static Files (React Frontend) ───────────────────────────────
 
-# Check if frontend dist exists (production/Docker)
-FRONTEND_DIST = "/app/frontend/dist"
-if os.path.exists(FRONTEND_DIST):
+# Check multiple possible frontend paths (Docker Hugging Face, Render, local)
+_POSSIBLE_FRONTEND_PATHS = [
+    "/app/frontend/dist",  # Docker/Hugging Face
+    "/app/frontend/react-directory/dist",  # Render
+    os.path.join(os.path.dirname(__file__), "../../../frontend/react-directory/dist"),  # Local dev relative
+    "frontend/react-directory/dist",  # Local dev cwd
+]
+
+FRONTEND_DIST = None
+for path in _POSSIBLE_FRONTEND_PATHS:
+    if os.path.exists(path):
+        FRONTEND_DIST = path
+        break
+
+if FRONTEND_DIST:
     logger.info("Serving React frontend from %s", FRONTEND_DIST)
-    app.mount("/assets", StaticFiles(directory=os.path.join(FRONTEND_DIST, "assets")), name="assets")
+    assets_path = os.path.join(FRONTEND_DIST, "assets")
+    if os.path.exists(assets_path):
+        app.mount("/assets", StaticFiles(directory=assets_path), name="assets")
 else:
-    logger.info("Frontend dist not found at %s - API only mode", FRONTEND_DIST)
+    logger.info("Frontend dist not found in any known location - API only mode")
 
 
 # ── Error Handling ────────────────────────────────────────────────
@@ -199,9 +213,10 @@ async def _build_response(result: dict, analysis_type: AnalysisType) -> Analysis
 @app.get("/")
 async def root():
     """Serve React frontend if available, otherwise redirect to API docs."""
-    index_path = os.path.join(FRONTEND_DIST, "index.html")
-    if os.path.exists(index_path):
-        return FileResponse(index_path)
+    if FRONTEND_DIST:
+        index_path = os.path.join(FRONTEND_DIST, "index.html")
+        if os.path.exists(index_path):
+            return FileResponse(index_path)
     return RedirectResponse(url="/docs")
 
 
