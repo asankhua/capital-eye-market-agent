@@ -2,7 +2,7 @@
 
 ## Quick Deploy
 
-[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/asankhua/-v1)
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/asankhua/capital-eye-market-agent)
 
 ## Manual Deployment Steps
 
@@ -18,7 +18,7 @@ git push origin main
 
 1. Go to [render.com](https://render.com) and sign in
 2. Click **"New +"** → **"Web Service"**
-3. Connect your GitHub repo: `asankhua/-v1`
+3. Connect your GitHub repo: `asankhua/capital-eye-market-agent`
 4. Configure:
    - **Name**: `capital-eye-market-agent`
    - **Runtime**: `Python`
